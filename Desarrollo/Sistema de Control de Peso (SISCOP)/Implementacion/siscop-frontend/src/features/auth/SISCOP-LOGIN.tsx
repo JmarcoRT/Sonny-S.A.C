@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../../context/SISCOP-AUTH';
 import logoSiscop from '../../assets/imagotipo.svg';
 
 interface LoginFormData {
@@ -11,6 +12,7 @@ interface LoginFormData {
 
 export default function SiscopLogin() {
     const navigate = useNavigate();
+    const { setRol } = useAuth();
     const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
     const [mostrarPassword, setMostrarPassword] = useState(false);
 
@@ -19,8 +21,10 @@ export default function SiscopLogin() {
 
         // Simulación de roles según las credenciales del sistema
         if (identificador === 'nutri' || identificador === 'c.silva@hospital.gob.pe') {
+            setRol('Nutricionista');
             navigate('/nutricionista/dashboard');
         } else if (identificador === 'recep' || identificador === 'r.vargas@hospital.gob.pe') {
+            setRol('Recepcionista');
             navigate('/recepcionista/dashboard');
         } else {
             alert('Credenciales de prueba: use "nutri" o "recep"');
