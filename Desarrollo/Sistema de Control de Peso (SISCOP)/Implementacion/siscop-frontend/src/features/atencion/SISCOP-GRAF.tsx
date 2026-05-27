@@ -1,4 +1,4 @@
-﻿import { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { TrendingUp, Scale } from 'lucide-react';
 import SiscopWrap from './SISCOP-WRAP';
@@ -16,10 +16,10 @@ interface SVGBarChartProps {
 }
 
 function SVGBarChart({ data, color, title }: SVGBarChartProps) {
-    const width = 650;
+    const width = 1000;
     const height = 300;
-    const paddingLeft = 40;
-    const paddingRight = 20;
+    const paddingLeft = 50;
+    const paddingRight = 30;
     const paddingTop = 40;
     const paddingBottom = 40;
 
@@ -51,8 +51,8 @@ function SVGBarChart({ data, color, title }: SVGBarChartProps) {
                 <h4 className="text-sm font-semibold text-slate-800 uppercase tracking-wide">{title}</h4>
             </div>
             
-            <div className="w-full overflow-x-auto">
-                <svg viewBox={`0 0 ${width} ${height}`} className="w-full min-w-[550px] overflow-visible">
+            <div className="w-full flex justify-center items-center">
+                <svg viewBox={`0 0 ${width} ${height}`} className="w-full max-w-[1000px] h-[220px] sm:h-[260px] md:h-[300px] lg:h-[320px] overflow-visible">
                     {/* Eje Y (Línea vertical izquierda) */}
                     <line
                         x1={paddingLeft}
