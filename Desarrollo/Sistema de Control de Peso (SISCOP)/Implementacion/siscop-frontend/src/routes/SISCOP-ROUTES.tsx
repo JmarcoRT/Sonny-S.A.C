@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import SiscopGuard from '../components/SISCOP-GUARD';
 import SiscopLay from '../components/SISCOP-LAY';
 
@@ -6,14 +6,14 @@ import SiscopLogin from '../features/auth/SISCOP-LOGIN';
 import SiscopDash from '../features/dashboard/SISCOP-DASH';
 import SiscopPac from '../features/pacientes/SISCOP-PAC';
 import SiscopHc from '../features/pacientes/SISCOP-HC';
-import SiscopEvn from '../features/evaluaciones/SISCOP-EVN';
-import SiscopGraf from '../features/evaluaciones/SISCOP-GRAF';
+import SiscopEvn from '../features/atencion/SISCOP-EVN';
+import SiscopGraf from '../features/atencion/SISCOP-GRAF';
 
-import SiscopAten from '../features/evaluaciones/SISCOP-ATEN';
-import SiscopMate from '../features/evaluaciones/SISCOP-MATE';
-import SiscopMpac from '../features/pacientes/SISCOP-MPAC';
+import SiscopAten from '../features/atencion/SISCOP-ATEN';
+import SiscopMate from '../features/atencion/SISCOP-CONSULTA';
+import SiscopMpac from '../features/pacientes/SISCOP-PACFORM';
 import SiscopPerf from '../features/perfil/SISCOP-PERF';
-import SiscopVpdf from '../components/SISCOP-VPDF';
+import SiscopVpdf from '../components/SISCOP-REPORTE';
 
 export default function SiscopRoutes() {
     return (

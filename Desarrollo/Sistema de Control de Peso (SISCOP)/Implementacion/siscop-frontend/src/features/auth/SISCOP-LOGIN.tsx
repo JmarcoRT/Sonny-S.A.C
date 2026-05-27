@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/SISCOP-AUTH';
 import logoSiscop from '../../assets/imagotipo.svg';
+import { MOCK_USUARIOS } from '../../mocks/mockUsuarios';
 
 interface LoginFormData {
     usuario: string;
@@ -12,22 +13,27 @@ interface LoginFormData {
 
 export default function SiscopLogin() {
     const navigate = useNavigate();
-    const { setRol } = useAuth();
+    const { login } = useAuth();
     const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
     const [mostrarPassword, setMostrarPassword] = useState(false);
 
     const onSubmit = (data: LoginFormData) => {
-        const identificador = data.usuario.toLowerCase();
+        // Limpiamos espacios en blanco accidentales
+        const identificador = data.usuario.toLowerCase().trim();
 
-        // Simulación de roles según las credenciales del sistema
-        if (identificador === 'nutri' || identificador === 'c.silva@hospital.gob.pe') {
-            setRol('Nutricionista');
-            navigate('/nutricionista/dashboard');
-        } else if (identificador === 'recep' || identificador === 'r.vargas@hospital.gob.pe') {
-            setRol('Recepcionista');
-            navigate('/recepcionista/dashboard');
+        console.log("¡Botón presionado! Intentando entrar con:", identificador);
+
+        const userFound = MOCK_USUARIOS.find(
+            (u) => (u.usuario === identificador || u.identificador === identificador) && 
+                   u.contrasena === data.contrasena
+        );
+
+        if (userFound) {
+            console.log("Credenciales correctas, navegando...", userFound);
+            login({ nombre: userFound.nombre, apellidos: userFound.apellidos, rol: userFound.rol });
+            navigate(`/${userFound.rol.toLowerCase()}/dashboard`);
         } else {
-            alert('Credenciales de prueba: use "nutri" o "recep"');
+            alert('Usuario o contraseña incorrectos. \n\nPruebe con:\n- Nutricionista: "nutri" o "lucia"\n- Recepcionista: "recep" o "maria"\nContraseña en todos: "siscop123"');
         }
     };
 
@@ -49,7 +55,7 @@ export default function SiscopLogin() {
 
                 <div className="bg-white p-10 rounded-3xl shadow-[0_20px_40px_rgba(26,130,196,0.15)] w-full max-w-105 border border-slate-100">
 
-                    <h2 className="text-[1.75rem] font-bold mb-1 text-slate-900 tracking-tight">
+                    <h2 className="text-[1.75rem] font-semibold mb-1 text-slate-900 tracking-tight">
                         Iniciar Sesión
                     </h2>
                     <p className="text-slate-400 mb-8 text-[0.95rem]">
