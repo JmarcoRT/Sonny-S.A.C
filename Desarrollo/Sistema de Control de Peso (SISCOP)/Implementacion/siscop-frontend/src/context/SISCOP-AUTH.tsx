@@ -1,35 +1,46 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-interface AuthState {
-    rol: string | null;
-    setRol: (rol: string | null) => void;
+// Definimos cómo luce nuestro usuario
+export interface Usuario {
+    nombre: string;
+    apellidos: string;
+    rol: 'Nutricionista' | 'Recepcionista';
 }
 
-// 1. Crear el contexto internamente (no lo exportamos para no molestar a ESLint)
-const AuthContext = createContext<AuthState>({ rol: null, setRol: () => {} });
+interface AuthState {
+    usuario: Usuario | null;
+    login: (userData: Usuario) => void;
+    logout: () => void;
+}
 
-// 2. Exportar el Hook personalizado para usarlo en los componentes
+const AuthContext = createContext<AuthState>({
+    usuario: null,
+    login: () => { },
+    logout: () => { }
+});
+
 export const useAuth = () => useContext(AuthContext);
 
-// 3. El componente Proveedor principal
 export function SiscopAuthProvider({ children }: { children: React.ReactNode }) {
-    const [rol, setRol] = useState<string | null>(() => {
-        // Cargar el rol del localStorage si existe
-        const rolGuardado = localStorage.getItem('userRol');
-        return rolGuardado || null;
+    const [usuario, setUsuario] = useState<Usuario | null>(() => {
+        const userGuardado = localStorage.getItem('siscopUser');
+        return userGuardado ? JSON.parse(userGuardado) : null;
     });
 
-    // Sincronizar el rol con localStorage
     useEffect(() => {
-        if (rol) {
-            localStorage.setItem('userRol', rol);
+        if (usuario) {
+            localStorage.setItem('siscopUser', JSON.stringify(usuario));
         } else {
-            localStorage.removeItem('userRol');
+            localStorage.removeItem('siscopUser');
         }
-    }, [rol]);
+    }, [usuario]);
+
+    const login = (userData: Usuario) => setUsuario(userData);
+
+    const logout = () => setUsuario(null);
 
     return (
-        <AuthContext.Provider value={{ rol, setRol }}>
+        <AuthContext.Provider value={{ usuario, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
