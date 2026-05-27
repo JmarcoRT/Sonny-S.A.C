@@ -1,6 +1,6 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Activity, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Activity, FileText, Calendar } from 'lucide-react';
 import SiscopWrap from './SISCOP-WRAP';
 import { MOCK_PACIENTES, MOCK_EVALUACIONES } from '../../mocks/mockPacientes';
 import { Button } from '../../components/ui/Button';
@@ -17,10 +17,22 @@ export default function SiscopEvn() {
     const [perimetro, setPerimetro] = useState<string>('');
     const [indicaciones, setIndicaciones] = useState<string>('');
 
-    // Calendar state
-    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-    const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth());
-    const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
+    // Calendar state (inicializado en 1 mes en el futuro para agendar el próximo control)
+    const [selectedDate, setSelectedDate] = useState<Date>(() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() + 1);
+        return d;
+    });
+    const [currentMonth, setCurrentMonth] = useState<number>(() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() + 1);
+        return d.getMonth();
+    });
+    const [currentYear, setCurrentYear] = useState<number>(() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() + 1);
+        return d.getFullYear();
+    });
 
     // Cargar últimos datos antropométricos del paciente si existen
     useEffect(() => {
@@ -152,11 +164,18 @@ export default function SiscopEvn() {
             return;
         }
 
-        // Darle formato a la fecha elegida: DD-MM-YYYY
-        const d = selectedDate.getDate().toString().padStart(2, '0');
-        const m = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
-        const y = selectedDate.getFullYear();
-        const fechaFormateada = `${d}-${m}-${y}`;
+        // Fecha del control actual (hoy)
+        const today = new Date();
+        const dToday = today.getDate().toString().padStart(2, '0');
+        const mToday = (today.getMonth() + 1).toString().padStart(2, '0');
+        const yToday = today.getFullYear();
+        const fechaActualFormateada = `${dToday}-${mToday}-${yToday}`;
+
+        // Fecha del próximo control agendado (del calendario)
+        const dNext = selectedDate.getDate().toString().padStart(2, '0');
+        const mNext = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
+        const yNext = selectedDate.getFullYear();
+        const fechaProximoFormateada = `${dNext}-${mNext}-${yNext}`;
 
         // Clasificación
         let clasificacion: 'Bajo peso' | 'Normal' | 'Sobrepeso' | 'Obesidad' = 'Normal';
@@ -169,7 +188,8 @@ export default function SiscopEvn() {
         const nuevaEvaluacion = {
             id: (MOCK_EVALUACIONES.length + 1).toString(),
             pacienteId,
-            fecha: fechaFormateada,
+            fecha: fechaActualFormateada, // Fecha actual para este control
+            fechaProximoControl: fechaProximoFormateada, // Próximo control programado
             tipo: 'Control Nutricional',
             peso: pesoNum,
             talla: tallaNum,
@@ -184,7 +204,7 @@ export default function SiscopEvn() {
         // Actualizar la fechaUltimoRegistro del paciente en el array MOCK_PACIENTES
         const pac = MOCK_PACIENTES.find(p => p.id === pacienteId);
         if (pac) {
-            pac.fechaUltimoRegistro = `${y} / ${m} / ${d}`;
+            pac.fechaUltimoRegistro = `${yToday} / ${mToday} / ${dToday}`;
             pac.edad = pac.edad; // mantiene edad
         }
 
@@ -261,6 +281,12 @@ export default function SiscopEvn() {
 
                         {/* Calendario Personalizado */}
                         <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+                            <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2 mb-2">
+                                <Calendar className="w-3.5 h-3.5 text-[#1A82C4]" />
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Agendar Próximo Control
+                                </span>
+                            </div>
                             <div className="flex items-center justify-between gap-1">
                                 <button
                                     onClick={handlePrevMonth}
