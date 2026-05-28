@@ -38,7 +38,7 @@ const sequelize = new Sequelize(
     },
 
     dialectOptions:
-      process.env.NODE_ENV === 'production'
+      (process.env.NODE_ENV === 'production' || process.env.DB_SSL === 'true')
         ? {
             ssl: {
               require:            true,

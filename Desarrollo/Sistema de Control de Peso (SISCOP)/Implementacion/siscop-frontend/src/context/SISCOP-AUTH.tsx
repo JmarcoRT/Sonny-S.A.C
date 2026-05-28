@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { logoutLocal } from '../services/auth';
 
 // Definimos cómo luce nuestro usuario
 export interface Usuario {
@@ -37,7 +38,10 @@ export function SiscopAuthProvider({ children }: { children: React.ReactNode }) 
 
     const login = (userData: Usuario) => setUsuario(userData);
 
-    const logout = () => setUsuario(null);
+    const logout = () => {
+        logoutLocal();
+        setUsuario(null);
+    };
 
     return (
         <AuthContext.Provider value={{ usuario, login, logout }}>
