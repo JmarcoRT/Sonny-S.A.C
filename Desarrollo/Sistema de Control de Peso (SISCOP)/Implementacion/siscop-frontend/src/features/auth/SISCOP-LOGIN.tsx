@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/SISCOP-AUTH';
+import { loginRequest } from '../../services/auth';
+import { ApiError } from '../../services/api';
 import logoSiscop from '../../assets/imagotipo.svg';
-import { MOCK_USUARIOS } from '../../mocks/mockUsuarios';
 
 interface LoginFormData {
     usuario: string;
@@ -16,24 +17,29 @@ export default function SiscopLogin() {
     const { login } = useAuth();
     const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
     const [mostrarPassword, setMostrarPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [errorBackend, setErrorBackend] = useState<string | null>(null);
 
-    const onSubmit = (data: LoginFormData) => {
-        // Limpiamos espacios en blanco accidentales
-        const identificador = data.usuario.toLowerCase().trim();
-
-        console.log("¡Botón presionado! Intentando entrar con:", identificador);
-
-        const userFound = MOCK_USUARIOS.find(
-            (u) => (u.usuario === identificador || u.identificador === identificador) && 
-                   u.contrasena === data.contrasena
-        );
-
-        if (userFound) {
-            console.log("Credenciales correctas, navegando...", userFound);
-            login({ nombre: userFound.nombre, apellidos: userFound.apellidos, rol: userFound.rol });
-            navigate(`/${userFound.rol.toLowerCase()}/dashboard`);
-        } else {
-            alert('Usuario o contraseña incorrectos. \n\nPruebe con:\n- Nutricionista: "nutri" o "lucia"\n- Recepcionista: "recep" o "maria"\nContraseña en todos: "siscop123"');
+    const onSubmit = async (data: LoginFormData) => {
+        setErrorBackend(null);
+        setLoading(true);
+        try {
+            const identificador = data.usuario.trim();
+            const usuarioAutenticado = await loginRequest(identificador, data.contrasena);
+            login({
+                nombre: usuarioAutenticado.nombre,
+                apellidos: usuarioAutenticado.apellidos,
+                rol: usuarioAutenticado.rol,
+            });
+            navigate(`/${usuarioAutenticado.rol.toLowerCase()}/dashboard`);
+        } catch (err) {
+            if (err instanceof ApiError) {
+                setErrorBackend(err.message);
+            } else {
+                setErrorBackend('No se pudo conectar con el servidor. Verifique que el backend esté activo.');
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -62,12 +68,19 @@ export default function SiscopLogin() {
                         Accede a tu cuenta
                     </p>
 
+                    {errorBackend && (
+                        <div className="mb-6 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                            {errorBackend}
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
                         <div className={`floating-container ${errors.usuario ? 'has-error' : ''}`}>
                             <input
                                 type="text"
                                 placeholder=" "
+                                autoComplete="username"
                                 className={`floating-input w-full pt-6 pb-2 px-3.5 text-[1rem] border rounded-2xl outline-none transition-all bg-transparent
                             ${errors.usuario
                                     ? 'border-red-500 focus:border-red-500 bg-red-50/10'
@@ -89,6 +102,7 @@ export default function SiscopLogin() {
                             <input
                                 type={mostrarPassword ? "text" : "password"}
                                 placeholder=" "
+                                autoComplete="current-password"
                                 className={`floating-input w-full pt-6 pb-2 pl-3.5 pr-11 text-[1rem] border rounded-2xl outline-none transition-all bg-transparent
                         ${errors.contrasena
                                     ? 'border-red-500 focus:border-red-500 bg-red-50/10'
@@ -116,9 +130,11 @@ export default function SiscopLogin() {
 
                         <button
                             type="submit"
-                            className="w-full py-3.5 bg-siscop-azul text-white font-semibold rounded-2xl text-[1rem] cursor-pointer hover:bg-[#156fa9] active:scale-[0.98] transition-all shadow-[0_6px_20px_rgba(26,130,196,0.25)] mt-10!"
+                            disabled={loading}
+                            className="w-full py-3.5 bg-siscop-azul text-white font-semibold rounded-2xl text-[1rem] cursor-pointer hover:bg-[#156fa9] active:scale-[0.98] transition-all shadow-[0_6px_20px_rgba(26,130,196,0.25)] mt-10! flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            Ingresar
+                            {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+                            {loading ? 'Ingresando...' : 'Ingresar'}
                         </button>
                     </form>
                 </div>
