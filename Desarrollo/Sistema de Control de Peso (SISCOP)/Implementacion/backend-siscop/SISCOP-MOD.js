@@ -46,13 +46,22 @@ const Usuario = sequelize.define(
       allowNull: false,
     },
     rol: {
-      type:      DataTypes.ENUM('administrador', 'nutricionista'),
+      type:      DataTypes.ENUM('recepcionista', 'nutricionista'),
       allowNull: false,
       validate: {
         isIn: {
-          args: [['administrador', 'nutricionista']],
-          msg:  'El rol debe ser "administrador" o "nutricionista".',
+          args: [['recepcionista', 'nutricionista']],
+          msg:  'El rol debe ser "recepcionista" o "nutricionista".',
         },
+      },
+    },
+    usuario: {
+      type:      DataTypes.STRING(50),
+      allowNull: false,
+      unique:    { msg: 'El nombre de usuario ya está registrado en el sistema.' },
+      validate: {
+        notEmpty: { msg: 'El nombre de usuario no puede estar vacío.' },
+        len:      { args: [3, 50], msg: 'El usuario debe tener entre 3 y 50 caracteres.' },
       },
     },
     activo: {
@@ -102,6 +111,21 @@ const Paciente = sequelize.define(
       unique:    { msg: 'El DNI ya existe en el sistema.' },
       validate: {
         notEmpty: { msg: 'El DNI no puede estar vacío.' },
+      },
+    },
+    tipo_documento: {
+      type:         DataTypes.ENUM('DNI', 'Carnet de Extranjería'),
+      allowNull:    false,
+      defaultValue: 'DNI',
+    },
+    telefono: {
+      type:      DataTypes.STRING(20),
+      allowNull: true,
+      validate: {
+        is: {
+          args: /^\+?\d{9,15}$/,
+          msg:  'Ingrese un número de teléfono válido (9 a 15 dígitos).',
+        },
       },
     },
     sexo: {

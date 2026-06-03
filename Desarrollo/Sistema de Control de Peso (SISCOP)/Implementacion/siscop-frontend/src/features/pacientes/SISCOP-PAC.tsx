@@ -1,65 +1,88 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/SISCOP-AUTH';
-import { MOCK_PACIENTES } from '../../mocks/mockPacientes';
 import type { Paciente } from '../../mocks/mockPacientes';
 import PacienteFiltros from './ui/PacienteFiltros';
 import PacienteTablaNutricionista from './ui/PacienteTablaNutricionista';
 import PacienteTablaRecepcionista from './ui/PacienteTablaRecepcionista';
 import Paginacion from '../../components/ui/Paginacion';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Loader2 } from 'lucide-react';
 import SiscopMpac from './SISCOP-PACFORM';
+import {
+    listarPacientes,
+    crearPaciente,
+    actualizarPaciente,
+    type PacienteInput,
+} from '../../services/pacientes';
+import { ApiError } from '../../services/api';
+
+const ITEMS_PER_PAGE = 8;
+
+interface PacienteFormSubmit {
+    tipoDocumento: string;
+    documento: string;
+    nombre: string;
+    apellidoPaterno: string;
+    apellidoMaterno: string;
+    fechaNacimiento: string;
+    edad: string;
+    sexo: 'Femenino' | 'Masculino';
+    telefono: string;
+}
 
 export default function SiscopPac() {
     const { usuario } = useAuth();
     const rol = (usuario?.rol || 'Nutricionista') as 'Nutricionista' | 'Recepcionista';
     const navigate = useNavigate();
 
-    // Listado de pacientes en estado local para simular persistencia en memoria durante la sesión
-    const [pacientesList, setPacientesList] = useState<Paciente[]>(MOCK_PACIENTES);
+    const [pacientesList, setPacientesList] = useState<Paciente[]>([]);
+    const [totalPages, setTotalPages] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-    // Estado del modal de registro
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [patientToEdit, setPatientToEdit] = useState<Paciente | null>(null);
 
-    // Filtros de búsqueda (estado local)
     const [nombreQuery, setNombreQuery] = useState('');
     const [documentoQuery, setDocumentoQuery] = useState('');
-
-    // Filtros aplicados al presionar el botón "Filtrar"
     const [appliedFilters, setAppliedFilters] = useState({ nombre: '', documento: '' });
 
-    // Paginación (estado local)
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8;
 
-    // Filtrado de pacientes local (simulación de base de datos)
-    const filteredPacientes = useMemo(() => {
-        return pacientesList.filter((paciente) => {
-            const matchesNombre =
-                paciente.nombre.toLowerCase().includes(appliedFilters.nombre.toLowerCase()) ||
-                paciente.apellido.toLowerCase().includes(appliedFilters.nombre.toLowerCase());
+    const cargarPacientes = useCallback(async () => {
+        setLoading(true);
+        setErrorMsg(null);
+        try {
+            const res = await listarPacientes({
+                nombre: appliedFilters.nombre,
+                documento: appliedFilters.documento,
+                page: currentPage,
+                limit: ITEMS_PER_PAGE,
+            });
+            setPacientesList(res.data);
+            setTotalPages(res.paginacion.totalPages);
+        } catch (err) {
+            setErrorMsg(
+                err instanceof ApiError
+                    ? err.message
+                    : 'No se pudo conectar con el servidor.'
+            );
+            setPacientesList([]);
+            setTotalPages(1);
+        } finally {
+            setLoading(false);
+        }
+    }, [appliedFilters, currentPage]);
 
-            const matchesDocumento = paciente.documento.includes(appliedFilters.documento);
-
-            return matchesNombre && matchesDocumento;
-        });
-    }, [appliedFilters, pacientesList]);
-
-    // Pacientes paginados
-    const paginatedPacientes = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredPacientes.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredPacientes, currentPage]);
-
-    const totalPages = Math.ceil(filteredPacientes.length / itemsPerPage) || 1;
+    useEffect(() => {
+        cargarPacientes();
+    }, [cargarPacientes]);
 
     const handleFiltrar = () => {
         setAppliedFilters({ nombre: nombreQuery, documento: documentoQuery });
-        setCurrentPage(1); // Reiniciar a la primera página al buscar
+        setCurrentPage(1);
     };
 
-    // Acciones de navegación según el rol
     const handleAbrirHistoria = (id: string) => {
         navigate(`/nutricionista/pacientes/atencion?id=${id}`);
     };
@@ -82,47 +105,36 @@ export default function SiscopPac() {
         setIsModalOpen(true);
     };
 
-    const handleSavePatient = (data: any) => {
-        if (patientToEdit) {
-            // Modo Edición: Actualizar datos locales
-            const updatedList = pacientesList.map((p) => {
-                if (p.id === patientToEdit.id) {
-                    return {
-                        ...p,
-                        nombre: data.nombre,
-                        apellido: `${data.apellidoPaterno} ${data.apellidoMaterno}`,
-                        documento: data.documento,
-                        sexo: data.sexo,
-                        telefono: data.telefono,
-                        edad: parseInt(data.edad) || p.edad
-                    };
-                }
-                return p;
-            });
-            setPacientesList(updatedList);
-            alert(`¡Paciente ${data.nombre} actualizado con éxito!`);
-        } else {
-            // Modo Creación: Añadir nuevo paciente
-            const newPatient: Paciente = {
-                id: (pacientesList.length + 1).toString(),
-                nombre: data.nombre,
-                apellido: `${data.apellidoPaterno} ${data.apellidoMaterno}`,
-                documento: data.documento,
-                sexo: data.sexo,
-                edad: parseInt(data.edad) || 18,
-                telefono: data.telefono,
-                fechaUltimoRegistro: new Date().toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, ' / ')
-            };
-            setPacientesList([newPatient, ...pacientesList]);
-            alert(`¡Paciente ${data.nombre} registrado con éxito!`);
+    const mapFormToInput = (data: PacienteFormSubmit): PacienteInput => ({
+        nombres: data.nombre,
+        apellidos: `${data.apellidoPaterno} ${data.apellidoMaterno}`.trim(),
+        dni: data.documento,
+        tipo_documento: (data.tipoDocumento as 'DNI' | 'Carnet de Extranjería') || 'DNI',
+        sexo: data.sexo === 'Femenino' ? 'F' : 'M',
+        fecha_nacimiento: data.fechaNacimiento,
+        telefono: data.telefono,
+    });
+
+    const handleSavePatient = async (data: PacienteFormSubmit) => {
+        try {
+            if (patientToEdit) {
+                await actualizarPaciente(patientToEdit.id, mapFormToInput(data));
+                alert(`¡Paciente ${data.nombre} actualizado con éxito!`);
+            } else {
+                await crearPaciente(mapFormToInput(data));
+                alert(`¡Paciente ${data.nombre} registrado con éxito!`);
+            }
+            setIsModalOpen(false);
+            setPatientToEdit(null);
+            cargarPacientes();
+        } catch (err) {
+            const msg = err instanceof ApiError ? err.message : 'No se pudo guardar el paciente.';
+            alert(msg);
         }
-        setIsModalOpen(false);
-        setPatientToEdit(null);
     };
 
     return (
         <div className="space-y-6">
-            {/* Componente modular de filtros */}
             <PacienteFiltros
                 rol={rol}
                 nombreFilter={nombreQuery}
@@ -132,7 +144,6 @@ export default function SiscopPac() {
                 onFiltrar={handleFiltrar}
             />
 
-            {/* Cabecera de la tabla y botón de paciente nuevo (Solo para Recepcionista) */}
             {rol === 'Recepcionista' && (
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold text-slate-800">Pacientes encontrados</h2>
@@ -146,23 +157,32 @@ export default function SiscopPac() {
                 </div>
             )}
 
-            {/* Tablas específicas por rol */}
-            {rol === 'Nutricionista' ? (
+            {errorMsg && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                    {errorMsg}
+                </div>
+            )}
+
+            {loading ? (
+                <div className="flex items-center justify-center py-10 text-slate-500">
+                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                    Cargando pacientes...
+                </div>
+            ) : rol === 'Nutricionista' ? (
                 <PacienteTablaNutricionista
-                    pacientes={paginatedPacientes}
+                    pacientes={pacientesList}
                     onAbrirHistoria={handleAbrirHistoria}
                 />
             ) : (
                 <PacienteTablaRecepcionista
-                    pacientes={paginatedPacientes}
+                    pacientes={pacientesList}
                     onVerHistorial={handleVerHistorial}
                     onUltimaEvaluacion={handleUltimaEvaluacion}
                     onEditar={handleEditar}
                 />
             )}
 
-            {/* Componente modular de paginación */}
-            {filteredPacientes.length > 0 && (
+            {!loading && pacientesList.length > 0 && (
                 <Paginacion
                     currentPage={currentPage}
                     totalPages={totalPages}
@@ -170,7 +190,6 @@ export default function SiscopPac() {
                 />
             )}
 
-            {/* Modal de registro/edición de pacientes */}
             <SiscopMpac
                 isOpen={isModalOpen}
                 onClose={() => {
