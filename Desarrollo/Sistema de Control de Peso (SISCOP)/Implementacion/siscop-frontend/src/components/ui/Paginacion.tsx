@@ -1,4 +1,4 @@
-﻿interface PacientePaginacionProps {
+interface PacientePaginacionProps {
     currentPage: number;
     totalPages: number;
     onPageChange: (page: number) => void;
@@ -68,9 +68,9 @@ export default function Paginacion({
             <button
                 disabled={currentPage === 1}
                 onClick={() => onPageChange(currentPage - 1)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-500`}
             >
-                ← Anterior
+                Anterior
             </button>
 
             <div className="flex items-center gap-1">
@@ -80,9 +80,9 @@ export default function Paginacion({
             <button
                 disabled={currentPage === totalPages}
                 onClick={() => onPageChange(currentPage + 1)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-500`}
             >
-                Siguiente →
+                Siguiente
             </button>
         </div>
     );

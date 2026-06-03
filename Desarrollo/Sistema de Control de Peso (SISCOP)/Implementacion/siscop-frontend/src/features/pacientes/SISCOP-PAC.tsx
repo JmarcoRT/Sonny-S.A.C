@@ -91,10 +91,6 @@ export default function SiscopPac() {
         navigate(`/recepcionista/pacientes/historial?id=${id}`);
     };
 
-    const handleUltimaEvaluacion = (id: string) => {
-        navigate(`/recepcionista/pacientes/reporte/evaluacion/${id}`);
-    };
-
     const handleNuevoPaciente = () => {
         setPatientToEdit(null);
         setIsModalOpen(true);
@@ -177,7 +173,6 @@ export default function SiscopPac() {
                 <PacienteTablaRecepcionista
                     pacientes={pacientesList}
                     onVerHistorial={handleVerHistorial}
-                    onUltimaEvaluacion={handleUltimaEvaluacion}
                     onEditar={handleEditar}
                 />
             )}

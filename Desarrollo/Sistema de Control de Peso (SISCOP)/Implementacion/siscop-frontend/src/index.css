@@ -1,10 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-@theme {
+:root {
     --font-sans: 'Inter', sans-serif;
     --color-siscop-azul: #1A82C4;
     --color-siscop-verde: #00C03A;
+    --primary: #1A82C4;
+    --bg-gradient-start: #C0E6CF;
+    --bg-gradient-end: #DDF3FF;
+    --table-border: #1A82C4;
+    --table-bg: #e3f2fd;
+}
+
+@theme {
+    --color-siscop-azul: #1A82C4;
+    --color-siscop-verde: #00C03A;
+    --color-primary: #1A82C4;
 }
 
 html, body {

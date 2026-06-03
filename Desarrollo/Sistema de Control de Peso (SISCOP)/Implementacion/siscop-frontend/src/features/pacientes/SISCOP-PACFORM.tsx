@@ -1,10 +1,10 @@
-﻿import { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../../components/ui/Modal';
-import Input from '../../components/ui/Input';
-import Select from '../../components/ui/Select';
-import { Button } from '../../components/ui/Button';
+import CampoTexto from '../../components/ui/CampoTexto';
+import Seleccion from '../../components/ui/Seleccion';
+import { Button } from '../../components/ui/Boton';
 import type { Paciente } from '../../mocks/mockPacientes';
 
 interface PatientFormData {
@@ -146,7 +146,7 @@ export default function SiscopMpac({ isOpen, onClose, onSave, patientToEdit }: S
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Tipo de documento */}
-                    <Select
+                    <Seleccion
                         label="Tipo de documento *"
                         error={errors.tipoDocumento ? 'Campo requerido' : undefined}
                         options={[
@@ -157,7 +157,7 @@ export default function SiscopMpac({ isOpen, onClose, onSave, patientToEdit }: S
                     />
 
                     {/* N° de documento */}
-                    <Input
+                    <CampoTexto
                         label="N° de documento *"
                         placeholder="N° de documento"
                         error={errors.documento?.message}
@@ -171,7 +171,7 @@ export default function SiscopMpac({ isOpen, onClose, onSave, patientToEdit }: S
                     />
 
                     {/* Nombres */}
-                    <Input
+                    <CampoTexto
                         label="Nombres *"
                         placeholder="Nombres"
                         error={errors.nombre?.message}
@@ -182,12 +182,12 @@ export default function SiscopMpac({ isOpen, onClose, onSave, patientToEdit }: S
                     <div className="flex flex-col gap-1.5">
                         <label className="text-sm font-semibold text-slate-700">Apellidos *</label>
                         <div className="grid grid-cols-2 gap-4">
-                            <Input
+                            <CampoTexto
                                 placeholder="Paterno"
                                 error={errors.apellidoPaterno?.message}
                                 {...register('apellidoPaterno', { required: 'Apellido paterno obligatorio.' })}
                             />
-                            <Input
+                            <CampoTexto
                                 placeholder="Materno"
                                 error={errors.apellidoMaterno?.message}
                                 {...register('apellidoMaterno', { required: 'Apellido materno obligatorio.' })}
@@ -196,7 +196,7 @@ export default function SiscopMpac({ isOpen, onClose, onSave, patientToEdit }: S
                     </div>
 
                     {/* Fecha de nacimiento */}
-                    <Input
+                    <CampoTexto
                         label="Fecha de nacimiento*"
                         type="date"
                         error={errors.fechaNacimiento?.message}
@@ -204,7 +204,7 @@ export default function SiscopMpac({ isOpen, onClose, onSave, patientToEdit }: S
                     />
 
                     {/* Edad */}
-                    <Input
+                    <CampoTexto
                         label="Edad *"
                         readOnly
                         placeholder="Edad"
@@ -213,7 +213,7 @@ export default function SiscopMpac({ isOpen, onClose, onSave, patientToEdit }: S
                     />
 
                     {/* Sexo */}
-                    <Select
+                    <Seleccion
                         label="Sexo *"
                         options={[
                             { value: 'Femenino', label: 'Femenino' },
@@ -223,7 +223,7 @@ export default function SiscopMpac({ isOpen, onClose, onSave, patientToEdit }: S
                     />
 
                     {/* Teléfono */}
-                    <Input
+                    <CampoTexto
                         label="Teléfono *"
                         placeholder="Teléfono"
                         error={errors.telefono?.message}

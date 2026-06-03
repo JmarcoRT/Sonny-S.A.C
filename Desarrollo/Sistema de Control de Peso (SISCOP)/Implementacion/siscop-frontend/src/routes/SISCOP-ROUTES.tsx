@@ -12,8 +12,8 @@ import SiscopGraf from '../features/atencion/SISCOP-GRAF';
 import SiscopAten from '../features/atencion/SISCOP-ATEN';
 import SiscopMate from '../features/atencion/SISCOP-CONSULTA';
 import SiscopMpac from '../features/pacientes/SISCOP-PACFORM';
-import SiscopPerf from '../features/perfil/SISCOP-PERF';
-import SiscopVpdf from '../components/SISCOP-REPORTE';
+
+
 
 export default function SiscopRoutes() {
     return (
@@ -25,14 +25,14 @@ export default function SiscopRoutes() {
                 <Route element={<SiscopGuard rolRequerido="Nutricionista" />}>
                     <Route path="/nutricionista" element={<SiscopLay />}>
                         <Route path="dashboard" element={<SiscopDash />} />
-                        <Route path="perfil" element={<SiscopPerf />} />
+
 
                         <Route path="pacientes">
                             <Route index element={<SiscopPac />} />
                             <Route path="atencion" element={<SiscopAten />} />
                             <Route path="atencion/evaluacion" element={<SiscopEvn />} />
                             <Route path="atencion/evolucion" element={<SiscopGraf />} />
-                            <Route path="atencion/reporte/:tipoReporte/:id" element={<SiscopVpdf />} />
+
 
                             <Route path="atencion/historial">
                                 <Route index element={<SiscopHc />} />
@@ -47,13 +47,13 @@ export default function SiscopRoutes() {
                 <Route element={<SiscopGuard rolRequerido="Recepcionista" />}>
                     <Route path="/recepcionista" element={<SiscopLay />}>
                         <Route path="dashboard" element={<SiscopDash />} />
-                        <Route path="perfil" element={<SiscopPerf />} />
+
 
                         <Route path="pacientes">
                             <Route index element={<SiscopPac />} />
                             <Route path="registrar" element={<SiscopMpac />} />
                             <Route path="historial" element={<SiscopHc />} />
-                            <Route path="reporte/:tipoReporte/:id" element={<SiscopVpdf />} />
+
                         </Route>
                     </Route>
                 </Route>

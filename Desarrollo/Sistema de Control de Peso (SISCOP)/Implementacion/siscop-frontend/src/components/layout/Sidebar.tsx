@@ -17,7 +17,7 @@ export function Sidebar() {
                     <img src="/logoblanco.svg" alt="Logo SISCOP" className="w-10 h-10 object-contain" />
                     <div className="flex flex-col justify-center">
                         <h3 className="m-0 text-[#1A82C4] text-xl font-black leading-none">SISCOP</h3>
-                        <span className="text-[12px] text-slate-400 font-bold -mt-0.5">Portal {rol}</span>
+                        <span className="text-[11px] text-slate-500 font-medium -mt-0.5 whitespace-nowrap">Portal {rol}</span>
                     </div>
                 </div>
             </div>
