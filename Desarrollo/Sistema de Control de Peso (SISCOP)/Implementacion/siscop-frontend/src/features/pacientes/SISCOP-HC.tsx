@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import SiscopWrap from '../atencion/SISCOP-WRAP';
@@ -93,11 +93,6 @@ export default function SiscopHc() {
         setIsEditarModalOpen(true);
     };
 
-    const handlePrintPDF = (evalId: string) => {
-        const routePrefix = isNutricionista ? 'nutricionista' : 'recepcionista';
-        navigate(`/${routePrefix}/pacientes/atencion/reporte/evaluacion/${evalId}`);
-    };
-
     // Contenido general (filtros + listado + paginación)
     const renderHistorialContent = () => (
         <div className="space-y-6">
@@ -115,7 +110,6 @@ export default function SiscopHc() {
                 isNutricionista={isNutricionista}
                 pacienteId={pacienteId}
                 onVerRegistro={handleOpenVer}
-                onImprimirPDF={handlePrintPDF}
                 onEditarRegistro={handleEditarRegistro}
             />
 

@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { User, X, Activity, TrendingUp, FileText } from 'lucide-react';
 import { MOCK_PACIENTES, MOCK_EVALUACIONES } from '../../mocks/mockPacientes';
@@ -50,10 +50,10 @@ export default function SiscopWrap({ children }: AtencionWrapperProps) {
     const currentTab = location.pathname.split('/').pop() || 'evaluacion';
 
     const getImcBadgeStyles = (imc: number) => {
-        if (imc < 18.5) return 'bg-[#E3F2FD] text-[#1565C0]'; // Bajo peso (Blue)
-        if (imc < 25) return 'bg-[#E2F0EC] text-[#2E7D32]'; // Normal (Green)
-        if (imc < 30) return 'bg-[#FFF3E0] text-[#EF6C00]'; // Sobrepeso (Orange)
-        return 'bg-[#FFEBEE] text-[#C62828]'; // Obesidad (Red)
+        if (imc < 18.5) return 'bg-[#E3F2FD] text-[#1565C0]'; // Bajo peso (celeste)
+        if (imc < 25) return 'bg-[#E2F0EC] text-[#2E7D32]'; // Normal (verde)
+        if (imc < 30) return 'bg-[#FFF3E0] text-[#EF6C00]'; // Sobrepeso (naranja)
+        return 'bg-[#FFEBEE] text-[#C62828]'; // Obesidad (rojo)
     };
 
 
@@ -80,16 +80,15 @@ export default function SiscopWrap({ children }: AtencionWrapperProps) {
                 </div>
                 <button
                     onClick={() => navigate('/nutricionista/pacientes')}
-                    className="flex items-center gap-2 text-slate-500 hover:text-slate-700 font-semibold text-sm cursor-pointer select-none"
+                    className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-semibold text-sm cursor-pointer select-none bg-white/40 hover:bg-white/70 backdrop-blur-md border border-white/60 px-4 py-2 rounded-xl shadow-sm transition-all"
                 >
-                    <X className="w-4.5 h-4.5 text-slate-400" />
+                    <X className="w-4 h-4 text-slate-500" />
                     Cerrar historia
                 </button>
             </div>
 
             {/* Layout Principal: Sub-Sidebar Izquierdo + Panel Contenedor Derecho */}
             <div className="flex flex-1 w-full bg-slate-50/50 overflow-hidden">
-                {/* Sub-Sidebar Izquierdo (Resumen + Últimas Visitas) */}
                 <aside className="w-[195px] bg-white border-r border-slate-200 p-4.5 flex flex-col space-y-6 h-full overflow-y-auto flex-shrink-0">
                     {/* Resumen */}
                     <div className="space-y-4">

@@ -27,8 +27,8 @@ export function DashboardBarChart({ data }: DashboardBarChartProps) {
     };
 
     return (
-        <div className="w-full flex justify-center items-center">
-            <svg viewBox={`0 0 ${width} ${height}`} className="w-full max-w-[320px] overflow-visible">
+        <div className="w-full h-full flex justify-center items-center flex-1 min-h-0">
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full max-w-[320px] max-h-[180px] overflow-visible">
                 <g className="stroke-slate-100" strokeWidth="1" strokeDasharray="3 3">
                     <line x1={paddingLeft} y1={height - paddingBottom - (30 / maxVal) * chartHeight} x2={width - paddingRight} y2={height - paddingBottom - (30 / maxVal) * chartHeight} />
                     <line x1={paddingLeft} y1={height - paddingBottom - (10 / maxVal) * chartHeight} x2={width - paddingRight} y2={height - paddingBottom - (10 / maxVal) * chartHeight} />

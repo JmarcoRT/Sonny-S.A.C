@@ -29,14 +29,13 @@ function SVGBarChart({ data, color, title }: SVGBarChartProps) {
     const values = data.map((d) => d.value);
     const maxVal = Math.max(...values, 0);
 
-    // Give some space above the highest bar
     const max = maxVal * 1.15 || 100;
-    
+
     const getBarCoords = (index: number, value: number) => {
         const stepWidth = chartWidth / data.length;
         const barWidth = 32; // Ancho de la barra
         const x = paddingLeft + index * stepWidth + (stepWidth - barWidth) / 2;
-        
+
         // La altura de la barra es proporcional al valor
         const barHeight = (value / max) * chartHeight;
         const y = height - paddingBottom - barHeight;
@@ -50,10 +49,10 @@ function SVGBarChart({ data, color, title }: SVGBarChartProps) {
                 <TrendingUp className="w-5 h-5 text-[#1A82C4]" />
                 <h4 className="text-sm font-semibold text-slate-800 uppercase tracking-wide">{title}</h4>
             </div>
-            
+
             <div className="w-full flex justify-center items-center">
                 <svg viewBox={`0 0 ${width} ${height}`} className="w-full max-w-[1000px] h-[220px] sm:h-[260px] md:h-[300px] lg:h-[320px] overflow-visible">
-                    {/* Eje Y (Línea vertical izquierda) */}
+
                     <line
                         x1={paddingLeft}
                         y1={paddingTop - 10}
@@ -63,7 +62,6 @@ function SVGBarChart({ data, color, title }: SVGBarChartProps) {
                         strokeWidth="1.5"
                     />
 
-                    {/* Eje X (Línea horizontal inferior) */}
                     <line
                         x1={paddingLeft}
                         y1={height - paddingBottom}
@@ -73,12 +71,10 @@ function SVGBarChart({ data, color, title }: SVGBarChartProps) {
                         strokeWidth="1.5"
                     />
 
-                    {/* Dibujo de las barras */}
+                    {/* Dibujo de barras */}
                     {data.map((pt, i) => {
                         const { x, y, barWidth, barHeight } = getBarCoords(i, pt.value);
-                        const radius = 6; // Radio para redondear solo las esquinas superiores
-
-                        // Crear el path para dibujar un rectángulo con esquinas superiores redondeadas
+                        const radius = 6;
                         const pathData = `
                             M ${x} ${y + barHeight}
                             L ${x} ${y + radius}
@@ -91,14 +87,12 @@ function SVGBarChart({ data, color, title }: SVGBarChartProps) {
 
                         return (
                             <g key={i} className="group cursor-pointer">
-                                {/* Barra redondeada arriba */}
                                 <path
                                     d={pathData}
                                     fill={color}
                                     className="hover:opacity-90 transition-opacity"
                                 />
 
-                                {/* Valor numérico arriba de la barra */}
                                 <text
                                     x={x + barWidth / 2}
                                     y={y - 8}
@@ -108,7 +102,6 @@ function SVGBarChart({ data, color, title }: SVGBarChartProps) {
                                     {pt.value.toFixed(1)}
                                 </text>
 
-                                {/* Nombre del mes debajo de la barra */}
                                 <text
                                     x={x + barWidth / 2}
                                     y={height - 18}
@@ -133,7 +126,6 @@ export default function SiscopGraf() {
     // Cargar y ordenar puntos de peso para el paciente actual
     const weightData = useMemo(() => {
         if (pacienteId === '1') {
-            // Angie Danna Jimenez Vera (Valores exactos del mockup)
             return [
                 { label: 'Jul', value: 86.2 },
                 { label: 'Ago', value: 84.7 },
@@ -152,7 +144,7 @@ export default function SiscopGraf() {
             const pac = MOCK_PACIENTES.find(p => p.id === pacienteId);
             const evs = MOCK_EVALUACIONES.filter(e => e.pacienteId === pacienteId);
             const currentWeight = evs.length > 0 ? evs[0].peso : (pac?.sexo === 'Masculino' ? 82.0 : 64.0);
-            
+
             const monthsList = ['Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May'];
             return monthsList.map((m, i) => {
                 const diff = (10 - i) * 1.5;

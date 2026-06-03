@@ -15,7 +15,7 @@ export function DashboardLineChart({ data }: DashboardLineChartProps) {
 
     const getCoordinates = (index: number, value: number) => {
         const x = paddingLeft + (index / (data.length - 1)) * chartWidth;
-        const y = 140 - ((value - 300) / 100) * 50;
+        const y = 140 - (value - 40);
         return { x, y };
     };
 
@@ -26,8 +26,8 @@ export function DashboardLineChart({ data }: DashboardLineChartProps) {
         .join(' ');
 
     return (
-        <div className="w-full flex justify-center items-center">
-            <svg viewBox={`0 0 ${width} ${height}`} className="w-full max-w-[550px] overflow-visible">
+        <div className="w-full h-full flex justify-center items-center flex-1 min-h-0">
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full max-w-[550px] max-h-[180px] overflow-visible">
 
                 <g className="stroke-slate-100" strokeWidth="1" strokeDasharray="3 3">
                     <line x1={paddingLeft} y1="40" x2={width - paddingRight} y2="40" />
@@ -36,9 +36,9 @@ export function DashboardLineChart({ data }: DashboardLineChartProps) {
                 </g>
 
                 <g className="fill-slate-400 text-[10px] font-semibold" textAnchor="end">
-                    <text x={paddingLeft - 10} y="43">500</text>
-                    <text x={paddingLeft - 10} y="93">400</text>
-                    <text x={paddingLeft - 10} y="143">300</text>
+                    <text x={paddingLeft - 10} y="43">140</text>
+                    <text x={paddingLeft - 10} y="93">90</text>
+                    <text x={paddingLeft - 10} y="143">40</text>
                 </g>
 
 

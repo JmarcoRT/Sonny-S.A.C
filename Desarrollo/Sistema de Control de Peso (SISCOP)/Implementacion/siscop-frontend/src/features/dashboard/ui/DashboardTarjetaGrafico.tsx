@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+export type PeriodoType = 'Jornada' | 'Mensual' | 'Anual';
+
 interface DashboardChartCardProps {
     title: string;
     description?: string;
-    children: React.ReactNode;
+    children: (periodo: PeriodoType) => React.ReactNode;
 }
 
 export function DashboardChartCard({
@@ -12,10 +14,21 @@ export function DashboardChartCard({
     description,
     children
 }: DashboardChartCardProps) {
-    const [periodo, setPeriodo] = useState<'Jornada' | 'Mensual' | 'Anual'>('Jornada');
+    const [periodo, setPeriodo] = useState<PeriodoType>('Jornada');
+
+    const periods: PeriodoType[] = ['Jornada', 'Mensual', 'Anual'];
+    const currentIndex = periods.indexOf(periodo);
+
+    const handlePrev = () => {
+        setPeriodo(periods[(currentIndex - 1 + periods.length) % periods.length]);
+    };
+
+    const handleNext = () => {
+        setPeriodo(periods[(currentIndex + 1) % periods.length]);
+    };
 
     return (
-        <div className="bg-white rounded-3xl p-6 shadow-xs border border-slate-100 flex flex-col justify-between w-full h-full min-h-[320px]">
+        <div className="bg-white rounded-3xl p-6 shadow-xs border border-slate-100 flex flex-col justify-between w-full h-full min-h-0">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-50 pb-4">
                 <div>
                     <h3 className="text-lg font-semibold text-slate-800 tracking-tight">{title}</h3>
@@ -23,10 +36,10 @@ export function DashboardChartCard({
                 </div>
 
                 <div className="flex items-center gap-1.5 select-none bg-slate-50 border border-slate-100 rounded-full p-1 text-[11px] font-semibold text-slate-500">
-                    <button className="p-1 hover:text-slate-800 transition-colors cursor-pointer">
+                    <button onClick={handlePrev} className="p-1 hover:text-slate-800 transition-colors cursor-pointer">
                         <ChevronLeft className="w-3.5 h-3.5" />
                     </button>
-                    {(['Jornada', 'Mensual', 'Anual'] as const).map((p) => {
+                    {periods.map((p) => {
                         const isActive = periodo === p;
                         return (
                             <button
@@ -41,14 +54,14 @@ export function DashboardChartCard({
                             </button>
                         );
                     })}
-                    <button className="p-1 hover:text-slate-800 transition-colors cursor-pointer">
+                    <button onClick={handleNext} className="p-1 hover:text-slate-800 transition-colors cursor-pointer">
                         <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                 </div>
             </div>
 
-            <div className="flex-1 flex items-center justify-center w-full">
-                {children}
+            <div className="flex-1 flex items-center justify-center w-full min-h-0">
+                {children(periodo)}
             </div>
         </div>
     );

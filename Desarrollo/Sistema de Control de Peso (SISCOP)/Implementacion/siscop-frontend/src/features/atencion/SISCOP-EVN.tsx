@@ -3,15 +3,16 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Activity, FileText, Calendar } from 'lucide-react';
 import SiscopWrap from './SISCOP-WRAP';
 import { MOCK_PACIENTES, MOCK_EVALUACIONES } from '../../mocks/mockPacientes';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Boton';
+import CampoTexto from '../../components/ui/CampoTexto';
 
 export default function SiscopEvn() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const pacienteId = searchParams.get('id') || '';
 
-    // Form inputs state
+
+
     const [peso, setPeso] = useState<string>('');
     const [talla, setTalla] = useState<string>('');
     const [perimetro, setPerimetro] = useState<string>('');
@@ -57,7 +58,7 @@ export default function SiscopEvn() {
         const tallaNum = parseFloat(talla);
 
         if (!pesoNum || !tallaNum || tallaNum <= 0) return 0;
-        
+
         // Fórmula: peso (kg) / (talla (m))^2
         const tallaMeters = tallaNum / 100;
         return pesoNum / (tallaMeters * tallaMeters);
@@ -223,7 +224,7 @@ export default function SiscopEvn() {
                         <h3 className="font-semibold text-slate-800 text-sm">Datos Antropométricos</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Input
+                        <CampoTexto
                             label="Peso (kg)"
                             placeholder="Ej. 67.2"
                             value={peso}
@@ -231,14 +232,14 @@ export default function SiscopEvn() {
                             type="number"
                             step="0.1"
                         />
-                        <Input
+                        <CampoTexto
                             label="Talla (cm)"
                             placeholder="Ej. 165"
                             value={talla}
                             onChange={(e) => setTalla(e.target.value)}
                             type="number"
                         />
-                        <Input
+                        <CampoTexto
                             label="Perímetro Abdominal (cm)"
                             placeholder="Ej. 75"
                             value={perimetro}
@@ -294,7 +295,7 @@ export default function SiscopEvn() {
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
-                                
+
                                 <div className="flex items-center gap-1">
                                     <select
                                         value={currentMonth}
@@ -344,24 +345,23 @@ export default function SiscopEvn() {
                                 {Array.from({ length: daysInMonth }).map((_, idx) => {
                                     const dayNumber = idx + 1;
                                     const isSelected = selectedDate.getDate() === dayNumber &&
-                                                       selectedDate.getMonth() === currentMonth &&
-                                                       selectedDate.getFullYear() === currentYear;
-                                    
+                                        selectedDate.getMonth() === currentMonth &&
+                                        selectedDate.getFullYear() === currentYear;
+
                                     const isToday = new Date().getDate() === dayNumber &&
-                                                    new Date().getMonth() === currentMonth &&
-                                                    new Date().getFullYear() === currentYear;
+                                        new Date().getMonth() === currentMonth &&
+                                        new Date().getFullYear() === currentYear;
 
                                     return (
                                         <button
                                             key={`day-${dayNumber}`}
                                             onClick={() => setSelectedDate(new Date(currentYear, currentMonth, dayNumber))}
-                                            className={`h-7 w-7 mx-auto rounded-lg text-xs font-semibold flex items-center justify-center cursor-pointer transition-all ${
-                                                isSelected
+                                            className={`h-7 w-7 mx-auto rounded-lg text-xs font-semibold flex items-center justify-center cursor-pointer transition-all ${isSelected
                                                     ? 'bg-[#1A82C4] text-white'
                                                     : isToday
-                                                    ? 'border border-[#1A82C4] text-[#1A82C4] hover:bg-slate-50'
-                                                    : 'text-slate-600 hover:bg-slate-100'
-                                            }`}
+                                                        ? 'border border-[#1A82C4] text-[#1A82C4] hover:bg-slate-50'
+                                                        : 'text-slate-600 hover:bg-slate-100'
+                                                }`}
                                         >
                                             {dayNumber}
                                         </button>

@@ -14,12 +14,12 @@ export function DashboardDonutChart({ data }: DashboardDonutChartProps) {
     let accumulatedPercent = 0;
 
     return (
-        <div className="flex flex-col items-center justify-center w-full h-full gap-4">
-            <div className="relative w-[180px] h-[180px] flex items-center justify-center">
-                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90">
+        <div className="flex flex-col items-center justify-center w-full h-full gap-2 flex-1 min-h-0">
+            <div className="relative w-full h-full max-w-[160px] max-h-[160px] flex items-center justify-center flex-1 min-h-0">
+                <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90">
                     {data.map((item, index) => {
                         const strokeLength = (item.value / 100) * circumference;
-                        const strokeOffset = circumference - (accumulatedPercent / 100) * circumference;
+                        const strokeOffset = -(accumulatedPercent / 100) * circumference;
                         accumulatedPercent += item.value;
 
                         return (
@@ -40,10 +40,10 @@ export function DashboardDonutChart({ data }: DashboardDonutChartProps) {
                 </svg>
 
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="absolute top-[35%] left-[10%] text-[10px] font-semibold text-slate-500 bg-white/80 px-1 rounded-sm">
+                    <span className="absolute top-[30%] left-[15%] text-[10px] font-semibold text-slate-500 bg-white/80 px-1 rounded-sm">
                         {data[0].value}%
                     </span>
-                    <span className="absolute bottom-[35%] right-[10%] text-[10px] font-semibold text-slate-500 bg-white/80 px-1 rounded-sm">
+                    <span className="absolute bottom-[30%] right-[15%] text-[10px] font-semibold text-slate-500 bg-white/80 px-1 rounded-sm">
                         {data[1].value}%
                     </span>
                 </div>
