@@ -7,8 +7,8 @@
 ![Repo Size](https://img.shields.io/github/repo-size/luisgch2004/Sonny-S.A.C?style=flat-square&color=EC4899&label=tama%C3%B1o)
 ![Último Commit](https://img.shields.io/github/last-commit/luisgch2004/Sonny-S.A.C?style=flat-square&color=DB2777&label=%C3%BAltimo%20commit)
 ![Commits/mes](https://img.shields.io/github/commit-activity/m/luisgch2004/Sonny-S.A.C?style=flat-square&color=BE185D&label=commits%2Fmes)
-![Contribuyentes](https://img.shields.io/github/contributors/luisgch2004/Sonny-S.A.C?style=flat-square&color=9333EA&label=equipo)
-![Lenguaje Top](https://img.shields.io/github/languages/top/luisgch2004/Sonny-S.A.C?style=flat-square&color=7C3AED)
+![Contribuyentes](https://img.shields.io/github/contributors/luisgch2004/Sonny-S.A.C?style=flat-square&color=9D174D&label=equipo)
+![Lenguaje](https://img.shields.io/badge/lenguaje-TypeScript-831843?style=flat-square)
 ![Estado](https://img.shields.io/badge/estado-activo-22C55E?style=flat-square)
  
 </div>
