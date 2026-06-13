@@ -123,6 +123,7 @@ export interface Evaluacion {
     imc: number;
     clasificacionImc: 'Bajo peso' | 'Normal' | 'Sobrepeso' | 'Obesidad';
     indicaciones: string;
+    fechaProximoControl?: string;
 }
 
 export const MOCK_EVALUACIONES: Evaluacion[] = [

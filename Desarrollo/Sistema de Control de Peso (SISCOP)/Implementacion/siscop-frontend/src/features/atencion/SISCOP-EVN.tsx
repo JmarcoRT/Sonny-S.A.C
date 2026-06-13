@@ -1,56 +1,118 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Activity, FileText, Calendar } from 'lucide-react';
 import SiscopWrap from './SISCOP-WRAP';
 import { MOCK_PACIENTES, MOCK_EVALUACIONES } from '../../mocks/mockPacientes';
 import { Button } from '../../components/ui/Boton';
 import CampoTexto from '../../components/ui/CampoTexto';
+import ModalConfirmacion from '../../components/ui/ModalConfirmacion';
 
 export default function SiscopEvn() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const pacienteId = searchParams.get('id') || '';
 
+    const [modalConfirm, setModalConfirm] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText?: string;
+        cancelText?: string;
+        type: 'info' | 'success' | 'warning' | 'danger';
+        onConfirm: () => void | Promise<void>;
+        isLoading?: boolean;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info',
+        onConfirm: () => {}
+    });
 
-
-    const [peso, setPeso] = useState<string>('');
-    const [talla, setTalla] = useState<string>('');
-    const [perimetro, setPerimetro] = useState<string>('');
-    const [indicaciones, setIndicaciones] = useState<string>('');
+    const [peso, setPeso] = useState<string>(() => sessionStorage.getItem(`peso_${pacienteId}`) || '');
+    const [talla, setTalla] = useState<string>(() => sessionStorage.getItem(`talla_${pacienteId}`) || '');
+    const [perimetro, setPerimetro] = useState<string>(() => sessionStorage.getItem(`perimetro_${pacienteId}`) || '');
+    const [indicaciones, setIndicaciones] = useState<string>(() => sessionStorage.getItem(`indicaciones_${pacienteId}`) || '');
 
     // Calendar state (inicializado en 1 mes en el futuro para agendar el próximo control)
     const [selectedDate, setSelectedDate] = useState<Date>(() => {
+        const saved = sessionStorage.getItem(`selectedDate_${pacienteId}`);
+        if (saved) return new Date(saved);
         const d = new Date();
         d.setMonth(d.getMonth() + 1);
         return d;
     });
     const [currentMonth, setCurrentMonth] = useState<number>(() => {
+        const saved = sessionStorage.getItem(`selectedDate_${pacienteId}`);
+        if (saved) return new Date(saved).getMonth();
         const d = new Date();
         d.setMonth(d.getMonth() + 1);
         return d.getMonth();
     });
     const [currentYear, setCurrentYear] = useState<number>(() => {
+        const saved = sessionStorage.getItem(`selectedDate_${pacienteId}`);
+        if (saved) return new Date(saved).getFullYear();
         const d = new Date();
         d.setMonth(d.getMonth() + 1);
         return d.getFullYear();
     });
 
-    // Cargar últimos datos antropométricos del paciente si existen
+    const lastPacienteId = useRef(pacienteId);
+
+    // Sincronizar estados con sessionStorage y cargar datos al cambiar de paciente
     useEffect(() => {
-        if (pacienteId) {
-            const evs = MOCK_EVALUACIONES.filter(e => e.pacienteId === pacienteId);
-            if (evs.length > 0) {
-                // Ordenar por fecha descendente
-                const ordenadas = [...evs].sort((a, b) => {
-                    const dateA = a.fecha.split('-').reverse().join('-');
-                    const dateB = b.fecha.split('-').reverse().join('-');
-                    return new Date(dateB).getTime() - new Date(dateA).getTime();
-                });
-                // Autocompletar la talla de la última consulta como punto de partida útil
-                setTalla(ordenadas[0].talla.toString());
+        if (lastPacienteId.current !== pacienteId) {
+            // Si el paciente ha cambiado, cargamos sus datos de sessionStorage o los reiniciamos
+            const savedPeso = sessionStorage.getItem(`peso_${pacienteId}`) || '';
+            const savedTalla = sessionStorage.getItem(`talla_${pacienteId}`) || '';
+            const savedPerimetro = sessionStorage.getItem(`perimetro_${pacienteId}`) || '';
+            const savedIndicaciones = sessionStorage.getItem(`indicaciones_${pacienteId}`) || '';
+
+            setPeso(savedPeso);
+            setPerimetro(savedPerimetro);
+            setIndicaciones(savedIndicaciones);
+
+            if (savedTalla) {
+                setTalla(savedTalla);
+            } else {
+                const evs = MOCK_EVALUACIONES.filter(e => e.pacienteId === pacienteId);
+                if (evs.length > 0) {
+                    const ordenadas = [...evs].sort((a, b) => {
+                        const dateA = a.fecha.split('-').reverse().join('-');
+                        const dateB = b.fecha.split('-').reverse().join('-');
+                        return new Date(dateB).getTime() - new Date(dateA).getTime();
+                    });
+                    setTalla(ordenadas[0].talla.toString());
+                } else {
+                    setTalla('');
+                }
             }
+
+            const savedDate = sessionStorage.getItem(`selectedDate_${pacienteId}`);
+            if (savedDate) {
+                const parsedDate = new Date(savedDate);
+                setSelectedDate(parsedDate);
+                setCurrentMonth(parsedDate.getMonth());
+                setCurrentYear(parsedDate.getFullYear());
+            } else {
+                const d = new Date();
+                d.setMonth(d.getMonth() + 1);
+                setSelectedDate(d);
+                setCurrentMonth(d.getMonth());
+                setCurrentYear(d.getFullYear());
+            }
+
+            lastPacienteId.current = pacienteId;
+            return;
         }
-    }, [pacienteId]);
+
+        // Si el paciente es el mismo, guardamos los cambios de estado en sessionStorage
+        sessionStorage.setItem(`peso_${pacienteId}`, peso);
+        sessionStorage.setItem(`talla_${pacienteId}`, talla);
+        sessionStorage.setItem(`perimetro_${pacienteId}`, perimetro);
+        sessionStorage.setItem(`indicaciones_${pacienteId}`, indicaciones);
+        sessionStorage.setItem(`selectedDate_${pacienteId}`, selectedDate.toISOString());
+    }, [peso, talla, perimetro, indicaciones, selectedDate, pacienteId]);
 
     // Calcular IMC en tiempo real
     const imc = useMemo(() => {
@@ -148,20 +210,32 @@ export default function SiscopEvn() {
         const tallaNum = parseFloat(talla);
         const perimetroNum = parseFloat(perimetro);
 
+        const showWarning = (msg: string) => {
+            setModalConfirm({
+                isOpen: true,
+                title: 'Dato Requerido o Inválido',
+                message: msg,
+                type: 'warning',
+                confirmText: 'Corregir',
+                cancelText: 'Cerrar',
+                onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+            });
+        };
+
         if (!pesoNum || isNaN(pesoNum) || pesoNum <= 0) {
-            alert('Por favor, ingresa un peso válido (mayor a 0).');
+            showWarning('Por favor, ingresa un peso válido (mayor a 0 kg).');
             return;
         }
         if (!tallaNum || isNaN(tallaNum) || tallaNum <= 0) {
-            alert('Por favor, ingresa una talla válida en centímetros (mayor a 0).');
+            showWarning('Por favor, ingresa una talla válida en centímetros (mayor a 0 cm).');
             return;
         }
         if (!perimetroNum || isNaN(perimetroNum) || perimetroNum <= 0) {
-            alert('Por favor, ingresa un perímetro abdominal válido.');
+            showWarning('Por favor, ingresa un perímetro abdominal válido en centímetros.');
             return;
         }
         if (!indicaciones.trim()) {
-            alert('Por favor, ingresa las indicaciones nutricionales del paciente.');
+            showWarning('Por favor, ingresa las indicaciones nutricionales del paciente.');
             return;
         }
 
@@ -200,18 +274,55 @@ export default function SiscopEvn() {
             indicaciones: indicaciones
         };
 
-        MOCK_EVALUACIONES.unshift(nuevaEvaluacion);
+        setModalConfirm({
+            isOpen: true,
+            title: 'Confirmar Registro',
+            message: '¿Está seguro de que desea registrar este control nutricional? Se guardará en el historial clínico del paciente.',
+            type: 'info',
+            confirmText: 'Registrar',
+            cancelText: 'Cancelar',
+            onConfirm: async () => {
+                setModalConfirm(prev => ({ ...prev, isLoading: true }));
+                
+                // Guardar
+                MOCK_EVALUACIONES.unshift(nuevaEvaluacion);
 
-        // Actualizar la fechaUltimoRegistro del paciente en el array MOCK_PACIENTES
-        const pac = MOCK_PACIENTES.find(p => p.id === pacienteId);
-        if (pac) {
-            pac.fechaUltimoRegistro = `${yToday} / ${mToday} / ${dToday}`;
-            pac.edad = pac.edad; // mantiene edad
-        }
+                // Actualizar la fechaUltimoRegistro del paciente en el array MOCK_PACIENTES
+                const pac = MOCK_PACIENTES.find(p => p.id === pacienteId);
+                if (pac) {
+                    pac.fechaUltimoRegistro = `${yToday} / ${mToday} / ${dToday}`;
+                }
 
-        alert('¡Evaluación registrada con éxito!');
-        // Redirigir al historial para mostrar la entrada recién añadida
-        navigate(`/nutricionista/pacientes/atencion/historial?id=${pacienteId}`);
+                setModalConfirm({
+                    isOpen: true,
+                    title: '¡Operación Exitosa!',
+                    message: 'La evaluación nutricional ha sido guardada correctamente en el historial clínico del paciente.',
+                    type: 'success',
+                    confirmText: 'Aceptar',
+                    cancelText: 'Cerrar',
+                    onConfirm: () => {
+                        // Limpiar sessionStorage del paciente
+                        sessionStorage.removeItem(`peso_${pacienteId}`);
+                        sessionStorage.removeItem(`talla_${pacienteId}`);
+                        sessionStorage.removeItem(`perimetro_${pacienteId}`);
+                        sessionStorage.removeItem(`indicaciones_${pacienteId}`);
+                        sessionStorage.removeItem(`selectedDate_${pacienteId}`);
+
+                        // Limpiar estados locales para evitar guardado al desmontar
+                        setPeso('');
+                        setTalla('');
+                        setPerimetro('');
+                        setIndicaciones('');
+                        const d = new Date();
+                        d.setMonth(d.getMonth() + 1);
+                        setSelectedDate(d);
+
+                        setModalConfirm(prev => ({ ...prev, isOpen: false }));
+                        navigate(`/nutricionista/pacientes/atencion/historial?id=${pacienteId}`);
+                    }
+                });
+            }
+        });
     };
 
     return (
@@ -356,12 +467,15 @@ export default function SiscopEvn() {
                                         <button
                                             key={`day-${dayNumber}`}
                                             onClick={() => setSelectedDate(new Date(currentYear, currentMonth, dayNumber))}
-                                            className={`h-7 w-7 mx-auto rounded-lg text-xs font-semibold flex items-center justify-center cursor-pointer transition-all ${isSelected
+                                            className={`h-7 w-7 mx-auto rounded-lg text-xs font-semibold flex items-center justify-center cursor-pointer transition-all ${
+                                                isSelected
                                                     ? 'bg-[#1A82C4] text-white'
-                                                    : isToday
-                                                        ? 'border border-[#1A82C4] text-[#1A82C4] hover:bg-slate-50'
-                                                        : 'text-slate-600 hover:bg-slate-100'
-                                                }`}
+                                                    : 'text-slate-600 hover:bg-slate-100'
+                                            } ${
+                                                isToday
+                                                    ? 'ring-2 ring-[#1A82C4] ring-offset-2 font-bold'
+                                                    : ''
+                                            }`}
                                         >
                                             {dayNumber}
                                         </button>
@@ -381,6 +495,18 @@ export default function SiscopEvn() {
                     </div>
                 </div>
             </div>
+
+            <ModalConfirmacion
+                isOpen={modalConfirm.isOpen}
+                onClose={() => setModalConfirm(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={modalConfirm.onConfirm}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                confirmText={modalConfirm.confirmText}
+                cancelText={modalConfirm.cancelText}
+                type={modalConfirm.type}
+                isLoading={modalConfirm.isLoading}
+            />
         </SiscopWrap>
     );
 }

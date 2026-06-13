@@ -1,9 +1,10 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Activity } from 'lucide-react';
 import { MOCK_PACIENTES, MOCK_EVALUACIONES } from '../../mocks/mockPacientes';
 import { Button } from '../../components/ui/Boton';
 import CampoTexto from '../../components/ui/CampoTexto';
+import ModalConfirmacion from '../../components/ui/ModalConfirmacion';
 
 export default function SiscopMate() {
     const { atencionId } = useParams();
@@ -11,6 +12,23 @@ export default function SiscopMate() {
     const navigate = useNavigate();
 
     const pacienteId = searchParams.get('id') || '';
+
+    const [modalConfirm, setModalConfirm] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText?: string;
+        cancelText?: string;
+        type: 'info' | 'success' | 'warning' | 'danger';
+        onConfirm: () => void | Promise<void>;
+        isLoading?: boolean;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info',
+        onConfirm: () => {}
+    });
 
     // Buscar la evaluacion a editar
     const evaluacionExistente = useMemo(() => {
@@ -96,20 +114,32 @@ export default function SiscopMate() {
         const tallaNum = parseFloat(talla);
         const perimetroNum = parseFloat(perimetro);
 
+        const showWarning = (msg: string) => {
+            setModalConfirm({
+                isOpen: true,
+                title: 'Dato Requerido o Inválido',
+                message: msg,
+                type: 'warning',
+                confirmText: 'Corregir',
+                cancelText: 'Cerrar',
+                onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+            });
+        };
+
         if (!pesoNum || isNaN(pesoNum) || pesoNum <= 0) {
-            alert('Por favor, ingresa un peso v�lido (mayor a 0).');
+            showWarning('Por favor, ingresa un peso válido (mayor a 0 kg).');
             return;
         }
         if (!tallaNum || isNaN(tallaNum) || tallaNum <= 0) {
-            alert('Por favor, ingresa una talla v�lida en cent�metros (mayor a 0).');
+            showWarning('Por favor, ingresa una talla válida en centímetros (mayor a 0 cm).');
             return;
         }
         if (!perimetroNum || isNaN(perimetroNum) || perimetroNum <= 0) {
-            alert('Por favor, ingresa un per�metro abdominal v�lido.');
+            showWarning('Por favor, ingresa un perímetro abdominal válido en centímetros.');
             return;
         }
         if (!indicaciones.trim()) {
-            alert('Por favor, ingresa las indicaciones nutricionales del paciente.');
+            showWarning('Por favor, ingresa las indicaciones nutricionales del paciente.');
             return;
         }
 
@@ -121,26 +151,47 @@ export default function SiscopMate() {
             else if (imc < 30) clasificacion = 'Sobrepeso';
             else clasificacion = 'Obesidad';
 
-            // Actualizar datos de la evaluacion en el mock
-            evaluacionExistente.peso = pesoNum;
-            evaluacionExistente.talla = tallaNum;
-            evaluacionExistente.perimetroAbdominal = perimetroNum;
-            evaluacionExistente.imc = parseFloat(imc.toFixed(1));
-            evaluacionExistente.clasificacionImc = clasificacion;
-            evaluacionExistente.indicaciones = indicaciones;
+            setModalConfirm({
+                isOpen: true,
+                title: 'Confirmar Modificación',
+                message: '¿Está seguro de que desea guardar los cambios en esta evaluación médica?',
+                type: 'info',
+                confirmText: 'Guardar',
+                cancelText: 'Cancelar',
+                onConfirm: async () => {
+                    setModalConfirm(prev => ({ ...prev, isLoading: true }));
 
-            alert('�Evaluaci�n modificada con �xito!');
-            handleBack();
+                    // Actualizar datos de la evaluacion en el mock
+                    evaluacionExistente.peso = pesoNum;
+                    evaluacionExistente.talla = tallaNum;
+                    evaluacionExistente.perimetroAbdominal = perimetroNum;
+                    evaluacionExistente.imc = parseFloat(imc.toFixed(1));
+                    evaluacionExistente.clasificacionImc = clasificacion;
+                    evaluacionExistente.indicaciones = indicaciones;
+
+                    setModalConfirm({
+                        isOpen: true,
+                        title: '¡Cambios Guardados!',
+                        message: 'La evaluación médica ha sido modificada correctamente en el sistema.',
+                        type: 'success',
+                        confirmText: 'Aceptar',
+                        cancelText: 'Cerrar',
+                        onConfirm: () => {
+                            setModalConfirm(prev => ({ ...prev, isOpen: false }));
+                            handleBack();
+                        }
+                    });
+                }
+            });
         } else {
-            alert('No se encontr� la consulta a editar.');
-            handleBack();
+            showWarning('No se encontró la consulta a editar.');
         }
     };
 
     if (!paciente || !evaluacionExistente) {
         return (
             <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-xs">
-                <p className="text-slate-500 font-semibold mb-4">No se especific� una consulta v�lida para modificar.</p>
+                <p className="text-slate-500 font-semibold mb-4">No se especificó una consulta válida para modificar.</p>
                 <Button onClick={() => navigate('/nutricionista/pacientes')} variant="secondary">
                     Volver a Pacientes
                 </Button>
@@ -159,8 +210,8 @@ export default function SiscopMate() {
                     <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
-                    <h2 className="text-xl font-semibold text-slate-800">Modificar Consulta M�dica</h2>
-                    <p className="text-xs text-slate-400">Edici�n de registro del paciente: {paciente.apellido}, {paciente.nombre} (Fecha: {evaluacionExistente.fecha})</p>
+                    <h2 className="text-xl font-semibold text-slate-800">Modificar Consulta Médica</h2>
+                    <p className="text-xs text-slate-400">Edición de registro del paciente: {paciente.apellido}, {paciente.nombre} (Fecha: {evaluacionExistente.fecha})</p>
                 </div>
             </div>
 
@@ -169,7 +220,7 @@ export default function SiscopMate() {
                 <div className="bg-slate-50/30 border border-slate-100 rounded-2xl p-5 space-y-4">
                     <div className="flex items-center gap-2">
                         <Activity className="w-5 h-5 text-[#1A82C4]" />
-                        <h3 className="font-semibold text-slate-800 text-sm">Datos Antropom�tricos</h3>
+                        <h3 className="font-semibold text-slate-800 text-sm">Datos Antropométricos</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <CampoTexto
@@ -188,7 +239,7 @@ export default function SiscopMate() {
                             type="number"
                         />
                         <CampoTexto
-                            label="Per�metro Abdominal (cm)"
+                            label="Perímetro Abdominal (cm)"
                             placeholder="Ej. 75"
                             value={perimetro}
                             onChange={(e) => setPerimetro(e.target.value)}
@@ -207,7 +258,7 @@ export default function SiscopMate() {
                                 <h3 className="font-semibold text-slate-800 text-sm">Indicaciones nutricionales</h3>
                             </div>
                             <textarea
-                                placeholder="Observaciones m�dicas internas, antecedentes, diagn�stico..."
+                                placeholder="Observaciones médicas internas, antecedentes, diagnóstico..."
                                 value={indicaciones}
                                 onChange={(e) => setIndicaciones(e.target.value)}
                                 className="w-full h-80 bg-white border border-slate-200 rounded-xl p-4 outline-none focus:border-[#1A82C4] focus:ring-4 focus:ring-[#1A82C4]/10 transition-all text-slate-700 text-sm resize-none flex-1"
@@ -248,6 +299,18 @@ export default function SiscopMate() {
                     </div>
                 </div>
             </div>
+
+            <ModalConfirmacion
+                isOpen={modalConfirm.isOpen}
+                onClose={() => setModalConfirm(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={modalConfirm.onConfirm}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                confirmText={modalConfirm.confirmText}
+                cancelText={modalConfirm.cancelText}
+                type={modalConfirm.type}
+                isLoading={modalConfirm.isLoading}
+            />
         </div>
     );
 }

@@ -37,7 +37,7 @@ export function Modal({ isOpen, onClose, title, subtitle, children }: ModalProps
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
             <div className="fixed inset-0" onClick={onClose}></div>
 
-            <div className="relative bg-white rounded-3xl w-full max-w-4xl p-10 shadow-xl border border-slate-100 z-10 my-8">
+            <div className="relative bg-white rounded-3xl w-full max-w-4xl p-10 shadow-xl border border-slate-100 z-10 my-8 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex justify-between items-start mb-8">
                     <div>
                         <h2 className="text-2xl font-semibold text-slate-900">{title}</h2>

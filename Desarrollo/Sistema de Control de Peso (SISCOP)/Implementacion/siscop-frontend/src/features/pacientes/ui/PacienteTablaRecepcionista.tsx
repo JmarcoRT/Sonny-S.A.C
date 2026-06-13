@@ -1,16 +1,18 @@
 import type { Paciente } from '../../../mocks/mockPacientes';
-import { FileText, Pencil } from 'lucide-react';
+import { FileText, Pencil, Trash2 } from 'lucide-react';
 
 interface PacienteTablaRecepcionistaProps {
     pacientes: Paciente[];
     onVerHistorial: (id: string) => void;
     onEditar: (paciente: Paciente) => void;
+    onEliminar: (paciente: Paciente) => void;
 }
 
 export default function PacienteTablaRecepcionista({
     pacientes,
     onVerHistorial,
-    onEditar
+    onEditar,
+    onEliminar
 }: PacienteTablaRecepcionistaProps) {
     return (
         <div className="bg-white border border-slate-100 rounded-2xl shadow-xs overflow-hidden">
@@ -54,6 +56,13 @@ export default function PacienteTablaRecepcionista({
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />
                                                 Editar
+                                            </button>
+                                            <button
+                                                onClick={() => onEliminar(paciente)}
+                                                className="border border-red-200 hover:bg-red-50 text-red-650 text-xs font-semibold px-3 py-2 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                                Eliminar
                                             </button>
                                         </div>
                                     </td>

@@ -10,6 +10,7 @@ import { HistorialLista } from './ui/HistorialLista';
 import { HistorialModalVer } from './ui/HistorialModalVer';
 import { HistorialModalEditar } from './ui/HistorialModalEditar';
 import Paginacion from '../../components/ui/Paginacion';
+import ModalConfirmacion from '../../components/ui/ModalConfirmacion';
 
 export default function SiscopHc() {
     const [searchParams] = useSearchParams();
@@ -41,6 +42,23 @@ export default function SiscopHc() {
     const [isVerModalOpen, setIsVerModalOpen] = useState<boolean>(false);
     const [isEditarModalOpen, setIsEditarModalOpen] = useState<boolean>(false);
     const [selectedEval, setSelectedEval] = useState<Evaluacion | null>(null);
+
+    const [modalConfirm, setModalConfirm] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText?: string;
+        cancelText?: string;
+        type: 'info' | 'success' | 'warning' | 'danger';
+        onConfirm: () => void | Promise<void>;
+        isLoading?: boolean;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info',
+        onConfirm: () => {}
+    });
 
     // Todas las evaluaciones del paciente, de más reciente a más antigua
     const todasLasEvaluaciones = useMemo(() => {
@@ -93,6 +111,51 @@ export default function SiscopHc() {
         setIsEditarModalOpen(true);
     };
 
+    const handleEliminarRegistro = (ev: Evaluacion) => {
+        setModalConfirm({
+            isOpen: true,
+            title: 'Confirmar Eliminación',
+            message: `¿Está seguro de que desea eliminar la evaluación nutricional del día ${ev.fecha.replace(/-/g, ' / ')}? Esta acción es irreversible.`,
+            type: 'danger',
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar',
+            onConfirm: async () => {
+                setModalConfirm(prev => ({ ...prev, isLoading: true }));
+                
+                const idx = MOCK_EVALUACIONES.findIndex(item => item.id === ev.id);
+                if (idx !== -1) {
+                    MOCK_EVALUACIONES.splice(idx, 1);
+                }
+
+                // Si eliminamos la última evaluación, actualizar la fechaUltimoRegistro del paciente
+                const pacEvaluaciones = MOCK_EVALUACIONES.filter(e => e.pacienteId === pacienteId);
+                const pac = MOCK_PACIENTES.find(p => p.id === pacienteId);
+                if (pac) {
+                    if (pacEvaluaciones.length > 0) {
+                        pacEvaluaciones.sort((a, b) => {
+                            const dateA = a.fecha.split('-').reverse().join('-');
+                            const dateB = b.fecha.split('-').reverse().join('-');
+                            return new Date(dateB).getTime() - new Date(dateA).getTime();
+                        });
+                        pac.fechaUltimoRegistro = pacEvaluaciones[0].fecha.replace(/-/g, ' / ');
+                    } else {
+                        pac.fechaUltimoRegistro = 'No reg.';
+                    }
+                }
+
+                setModalConfirm({
+                    isOpen: true,
+                    title: '¡Registro Eliminado!',
+                    message: 'La evaluación médica ha sido removida del historial clínico.',
+                    type: 'success',
+                    confirmText: 'Aceptar',
+                    cancelText: 'Cerrar',
+                    onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+                });
+            }
+        });
+    };
+
     // Contenido general (filtros + listado + paginación)
     const renderHistorialContent = () => (
         <div className="space-y-6">
@@ -111,6 +174,7 @@ export default function SiscopHc() {
                 pacienteId={pacienteId}
                 onVerRegistro={handleOpenVer}
                 onEditarRegistro={handleEditarRegistro}
+                onEliminarRegistro={handleEliminarRegistro}
             />
 
             {totalPages > 1 && (
@@ -206,14 +270,36 @@ export default function SiscopHc() {
                     setSelectedEval(null);
                 }}
                 onSave={(updatedEval, editProximoControl) => {
-                    // Actualizar en el mock (lógica simplificada)
                     if (selectedEval) {
-                        Object.assign(selectedEval, updatedEval);
-                        alert('¡Evaluación actualizada con éxito!');
+                        Object.assign(selectedEval, {
+                            ...updatedEval,
+                            fechaProximoControl: editProximoControl ? editProximoControl.split('-').reverse().join('-') : updatedEval.fechaProximoControl
+                        });
+                        setModalConfirm({
+                            isOpen: true,
+                            title: '¡Operación Exitosa!',
+                            message: 'La evaluación médica ha sido modificada y guardada correctamente.',
+                            type: 'success',
+                            confirmText: 'Aceptar',
+                            cancelText: 'Cerrar',
+                            onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+                        });
                     }
                     setIsEditarModalOpen(false);
                     setSelectedEval(null);
                 }}
+            />
+
+            <ModalConfirmacion
+                isOpen={modalConfirm.isOpen}
+                onClose={() => setModalConfirm(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={modalConfirm.onConfirm}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                confirmText={modalConfirm.confirmText}
+                cancelText={modalConfirm.cancelText}
+                type={modalConfirm.type}
+                isLoading={modalConfirm.isLoading}
             />
         </>
     );

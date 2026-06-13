@@ -1,4 +1,3 @@
-import { apiRequest } from './api';
 import type { Paciente } from '../mocks/mockPacientes';
 import { MOCK_PACIENTES } from '../mocks/mockPacientes';
 
@@ -11,11 +10,6 @@ interface ListadoResponse {
         limit: number;
         totalPages: number;
     };
-}
-
-interface SingleResponse {
-    ok: true;
-    data: Paciente;
 }
 
 export interface PacienteInput {
@@ -76,13 +70,73 @@ export async function obtenerPaciente(id: string | number) {
 }
 
 export async function crearPaciente(data: PacienteInput) {
-    // Simular creación
+    // Simular creación real en el mock en memoria
     await new Promise(resolve => setTimeout(resolve, 400));
-    return MOCK_PACIENTES[0];
+    
+    // Calcular año de nacimiento estimado para la edad
+    let edadCalculada = 30;
+    if (data.fecha_nacimiento) {
+        const nacimiento = new Date(data.fecha_nacimiento);
+        const hoy = new Date();
+        let edad = hoy.getFullYear() - nacimiento.getFullYear();
+        const mes = hoy.getMonth() - nacimiento.getMonth();
+        if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+            edad--;
+        }
+        edadCalculada = edad >= 0 ? edad : 0;
+    }
+
+    const nuevoId = (MOCK_PACIENTES.length > 0 ? Math.max(...MOCK_PACIENTES.map(p => parseInt(p.id))) + 1 : 1).toString();
+    const nuevo: Paciente = {
+        id: nuevoId,
+        nombre: data.nombres,
+        apellido: data.apellidos,
+        documento: data.dni,
+        sexo: data.sexo === 'F' ? 'Femenino' : 'Masculino',
+        edad: edadCalculada,
+        telefono: data.telefono || '',
+        fechaUltimoRegistro: new Date().toLocaleDateString('es-PE').replace(/\//g, ' / ')
+    };
+    
+    MOCK_PACIENTES.unshift(nuevo);
+    return nuevo;
 }
 
 export async function actualizarPaciente(id: string | number, data: PacienteInput) {
-    // Simular actualización
+    // Simular actualización real en el mock en memoria
     await new Promise(resolve => setTimeout(resolve, 400));
-    return MOCK_PACIENTES.find(p => p.id === String(id)) || MOCK_PACIENTES[0];
+    const pac = MOCK_PACIENTES.find(p => p.id === String(id));
+    if (pac) {
+        // Recalcular edad si cambia la fecha de nacimiento
+        let edadCalculada = pac.edad;
+        if (data.fecha_nacimiento) {
+            const nacimiento = new Date(data.fecha_nacimiento);
+            const hoy = new Date();
+            let edad = hoy.getFullYear() - nacimiento.getFullYear();
+            const mes = hoy.getMonth() - nacimiento.getMonth();
+            if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+                edad--;
+            }
+            edadCalculada = edad >= 0 ? edad : 0;
+        }
+
+        pac.nombre = data.nombres;
+        pac.apellido = data.apellidos;
+        pac.documento = data.dni;
+        pac.sexo = data.sexo === 'F' ? 'Femenino' : 'Masculino';
+        pac.telefono = data.telefono || '';
+        pac.edad = edadCalculada;
+    }
+    return pac || MOCK_PACIENTES[0];
+}
+
+export async function eliminarPaciente(id: string | number) {
+    // Simular eliminación real en el mock en memoria
+    await new Promise(resolve => setTimeout(resolve, 400));
+    const index = MOCK_PACIENTES.findIndex(p => p.id === String(id));
+    if (index !== -1) {
+        MOCK_PACIENTES.splice(index, 1);
+        return true;
+    }
+    return false;
 }

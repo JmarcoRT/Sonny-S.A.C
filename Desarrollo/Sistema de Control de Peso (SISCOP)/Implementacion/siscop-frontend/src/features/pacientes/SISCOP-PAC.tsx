@@ -12,9 +12,11 @@ import {
     listarPacientes,
     crearPaciente,
     actualizarPaciente,
+    eliminarPaciente,
     type PacienteInput,
 } from '../../services/pacientes';
 import { ApiError } from '../../services/api';
+import ModalConfirmacion from '../../components/ui/ModalConfirmacion';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -48,6 +50,23 @@ export default function SiscopPac() {
     const [appliedFilters, setAppliedFilters] = useState({ nombre: '', documento: '' });
 
     const [currentPage, setCurrentPage] = useState(1);
+
+    const [modalConfirm, setModalConfirm] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText?: string;
+        cancelText?: string;
+        type: 'info' | 'success' | 'warning' | 'danger';
+        onConfirm: () => void | Promise<void>;
+        isLoading?: boolean;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info',
+        onConfirm: () => {}
+    });
 
     const cargarPacientes = useCallback(async () => {
         setLoading(true);
@@ -111,22 +130,102 @@ export default function SiscopPac() {
         telefono: data.telefono,
     });
 
-    const handleSavePatient = async (data: PacienteFormSubmit) => {
-        try {
-            if (patientToEdit) {
-                await actualizarPaciente(patientToEdit.id, mapFormToInput(data));
-                alert(`¡Paciente ${data.nombre} actualizado con éxito!`);
-            } else {
-                await crearPaciente(mapFormToInput(data));
-                alert(`¡Paciente ${data.nombre} registrado con éxito!`);
+    const handleSavePatient = (data: PacienteFormSubmit) => {
+        const title = patientToEdit ? 'Confirmar Modificación' : 'Confirmar Registro';
+        const message = patientToEdit 
+            ? `¿Está seguro de que desea guardar los cambios en los datos de ${data.nombre} ${data.apellidoPaterno}?`
+            : `¿Está seguro de que desea registrar al nuevo paciente ${data.nombre} ${data.apellidoPaterno}?`;
+
+        setModalConfirm({
+            isOpen: true,
+            title,
+            message,
+            type: 'info',
+            confirmText: 'Confirmar',
+            cancelText: 'Cancelar',
+            onConfirm: async () => {
+                setModalConfirm(prev => ({ ...prev, isLoading: true }));
+                try {
+                    if (patientToEdit) {
+                        await actualizarPaciente(patientToEdit.id, mapFormToInput(data));
+                        setIsModalOpen(false);
+                        setPatientToEdit(null);
+                        cargarPacientes();
+                        setModalConfirm({
+                            isOpen: true,
+                            title: '¡Operación Exitosa!',
+                            message: `La información de ${data.nombre} ha sido actualizada con éxito en la plataforma.`,
+                            type: 'success',
+                            confirmText: 'Aceptar',
+                            cancelText: 'Cerrar',
+                            onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+                        });
+                    } else {
+                        await crearPaciente(mapFormToInput(data));
+                        setIsModalOpen(false);
+                        setPatientToEdit(null);
+                        cargarPacientes();
+                        setModalConfirm({
+                            isOpen: true,
+                            title: '¡Registro Exitoso!',
+                            message: `El paciente ${data.nombre} ha sido registrado con éxito en la plataforma.`,
+                            type: 'success',
+                            confirmText: 'Aceptar',
+                            cancelText: 'Cerrar',
+                            onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+                        });
+                    }
+                } catch (err) {
+                    const msg = err instanceof ApiError ? err.message : 'No se pudo guardar la información del paciente.';
+                    setModalConfirm({
+                        isOpen: true,
+                        title: 'Error al Procesar',
+                        message: msg,
+                        type: 'danger',
+                        confirmText: 'Cerrar',
+                        cancelText: 'Volver',
+                        onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+                    });
+                }
             }
-            setIsModalOpen(false);
-            setPatientToEdit(null);
-            cargarPacientes();
-        } catch (err) {
-            const msg = err instanceof ApiError ? err.message : 'No se pudo guardar el paciente.';
-            alert(msg);
-        }
+        });
+    };
+
+    const handleEliminarPatient = (paciente: Paciente) => {
+        setModalConfirm({
+            isOpen: true,
+            title: 'Confirmar Eliminación',
+            message: `¿Está seguro de que desea eliminar al paciente ${paciente.nombre} ${paciente.apellido}? Esta acción eliminará permanentemente su registro y todo su historial de evaluaciones de la plataforma.`,
+            type: 'danger',
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar',
+            onConfirm: async () => {
+                setModalConfirm(prev => ({ ...prev, isLoading: true }));
+                try {
+                    await eliminarPaciente(paciente.id);
+                    cargarPacientes();
+                    setModalConfirm({
+                        isOpen: true,
+                        title: '¡Registro Eliminado!',
+                        message: `El paciente ${paciente.nombre} ${paciente.apellido} ha sido retirado del sistema.`,
+                        type: 'success',
+                        confirmText: 'Aceptar',
+                        cancelText: 'Cerrar',
+                        onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+                    });
+                } catch (err) {
+                    setModalConfirm({
+                        isOpen: true,
+                        title: 'Error al Eliminar',
+                        message: 'Ocurrió un error al intentar eliminar el registro del paciente.',
+                        type: 'danger',
+                        confirmText: 'Cerrar',
+                        cancelText: 'Cerrar',
+                        onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+                    });
+                }
+            }
+        });
     };
 
     return (
@@ -174,6 +273,7 @@ export default function SiscopPac() {
                     pacientes={pacientesList}
                     onVerHistorial={handleVerHistorial}
                     onEditar={handleEditar}
+                    onEliminar={handleEliminarPatient}
                 />
             )}
 
@@ -193,6 +293,18 @@ export default function SiscopPac() {
                 }}
                 onSave={handleSavePatient}
                 patientToEdit={patientToEdit}
+            />
+
+            <ModalConfirmacion
+                isOpen={modalConfirm.isOpen}
+                onClose={() => setModalConfirm(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={modalConfirm.onConfirm}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                confirmText={modalConfirm.confirmText}
+                cancelText={modalConfirm.cancelText}
+                type={modalConfirm.type}
+                isLoading={modalConfirm.isLoading}
             />
         </div>
     );
