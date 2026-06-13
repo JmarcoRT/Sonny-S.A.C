@@ -1,5 +1,6 @@
 import { apiRequest } from './api';
 import type { Paciente } from '../mocks/mockPacientes';
+import { MOCK_PACIENTES } from '../mocks/mockPacientes';
 
 interface ListadoResponse {
     ok: true;
@@ -33,27 +34,55 @@ export async function listarPacientes(params: {
     page?: number;
     limit?: number;
 }) {
-    const res = await apiRequest<ListadoResponse>('/pacientes', { query: params });
-    return res;
+    let filtrados = [...MOCK_PACIENTES];
+    
+    if (params.nombre) {
+        const query = params.nombre.toLowerCase();
+        filtrados = filtrados.filter(p => 
+            p.nombre.toLowerCase().includes(query) || 
+            p.apellido.toLowerCase().includes(query)
+        );
+    }
+    if (params.documento) {
+        filtrados = filtrados.filter(p => p.documento.includes(params.documento!));
+    }
+
+    const page = params.page || 1;
+    const limit = params.limit || 8;
+    const total = filtrados.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    
+    const data = filtrados.slice((page - 1) * limit, page * limit);
+
+    // Simular un pequeño retardo de red
+    await new Promise(resolve => setTimeout(resolve, 400));
+
+    return {
+        ok: true,
+        data,
+        paginacion: {
+            total,
+            page,
+            limit,
+            totalPages
+        }
+    } as ListadoResponse;
 }
 
 export async function obtenerPaciente(id: string | number) {
-    const res = await apiRequest<SingleResponse>(`/pacientes/${id}`);
-    return res.data;
+    const paciente = MOCK_PACIENTES.find(p => p.id === String(id));
+    if (!paciente) throw new Error("Paciente no encontrado");
+    return paciente;
 }
 
 export async function crearPaciente(data: PacienteInput) {
-    const res = await apiRequest<SingleResponse>('/pacientes', {
-        method: 'POST',
-        body: data,
-    });
-    return res.data;
+    // Simular creación
+    await new Promise(resolve => setTimeout(resolve, 400));
+    return MOCK_PACIENTES[0];
 }
 
 export async function actualizarPaciente(id: string | number, data: PacienteInput) {
-    const res = await apiRequest<SingleResponse>(`/pacientes/${id}`, {
-        method: 'PUT',
-        body: data,
-    });
-    return res.data;
+    // Simular actualización
+    await new Promise(resolve => setTimeout(resolve, 400));
+    return MOCK_PACIENTES.find(p => p.id === String(id)) || MOCK_PACIENTES[0];
 }

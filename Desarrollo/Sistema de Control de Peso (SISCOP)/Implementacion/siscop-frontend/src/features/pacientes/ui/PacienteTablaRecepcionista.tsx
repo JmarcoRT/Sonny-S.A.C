@@ -4,14 +4,12 @@ import { FileText, Pencil } from 'lucide-react';
 interface PacienteTablaRecepcionistaProps {
     pacientes: Paciente[];
     onVerHistorial: (id: string) => void;
-    onUltimaEvaluacion: (id: string) => void;
     onEditar: (paciente: Paciente) => void;
 }
 
 export default function PacienteTablaRecepcionista({
     pacientes,
     onVerHistorial,
-    onUltimaEvaluacion,
     onEditar
 }: PacienteTablaRecepcionistaProps) {
     return (
@@ -49,12 +47,6 @@ export default function PacienteTablaRecepcionista({
                                             >
                                                 <FileText className="w-3.5 h-3.5" />
                                                 Ver historial
-                                            </button>
-                                            <button
-                                                onClick={() => onUltimaEvaluacion(paciente.id)}
-                                                className="border border-[#1A82C4] text-[#1A82C4] hover:bg-[#1A82C4]/5 bg-transparent text-xs font-semibold px-3 py-2 rounded-lg transition-colors cursor-pointer"
-                                            >
-                                                Última evaluación
                                             </button>
                                             <button
                                                 onClick={() => onEditar(paciente)}

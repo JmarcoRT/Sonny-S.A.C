@@ -29,7 +29,6 @@ export default function PacienteFiltros({
     return (
         <div className="bg-white rounded-2xl p-6 shadow-xs border border-slate-100 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-5 items-end">
-                {/* Nombre filter */}
                 <div className="flex flex-col gap-2">
                     <label className="text-sm font-semibold text-slate-800">Filtrar por nombre</label>
                     <div className="relative">
@@ -45,7 +44,6 @@ export default function PacienteFiltros({
                     </div>
                 </div>
 
-                {/* Document filter */}
                 <div className="flex flex-col gap-2">
                     <label className="text-sm font-semibold text-slate-800">{docLabel}</label>
                     <div className="relative">

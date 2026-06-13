@@ -1,17 +1,17 @@
 ﻿import { Folder, Check } from 'lucide-react';
-import DashboardKpiCard from './ui/DashboardKpiCard';
-import DashboardChartCard from './ui/DashboardChartCard';
-import DashboardLineChart from './ui/DashboardLineChart';
-import DashboardDonutChart from './ui/DashboardDonutChart';
-import DashboardBarChart from './ui/DashboardBarChart';
+import DashboardKpiCard from './ui/DashboardTarjetaKpi';
+import DashboardTarjetaGrafico from './ui/DashboardTarjetaGrafico';
+import DashboardGraficoLineas from './ui/DashboardGraficoLineas';
+import DashboardGraficoDona from './ui/DashboardGraficoDona';
+import DashboardGraficoBarras from './ui/DashboardGraficoBarras';
 import { MOCK_KPI_DATA, MOCK_LINE_CHART_DATA, MOCK_SEX_DATA, MOCK_AGE_DATA } from '../../mocks/mockDashboard';
 
 export default function SiscopDash() {
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Métricas rápidas (KPI Cards) a la izquierda */}
-                <div className="lg:col-span-1 flex flex-col sm:flex-row lg:flex-col gap-6">
+        <div className="flex flex-col gap-6 h-full min-h-[500px]">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
+                {/* Tarjetas de indicadores rápidos (KPI Cards) a la izquierda */}
+                <div className="lg:col-span-1 flex flex-col gap-6">
                     <DashboardKpiCard
                         title="Pacientes Totales"
                         value={MOCK_KPI_DATA.totales}
@@ -32,32 +32,32 @@ export default function SiscopDash() {
                     />
                 </div>
 
-                {/* Gráfico principal de atenciones a la derecha */}
+                {/* Gráfico principal de atenciones */}
                 <div className="lg:col-span-3">
-                    <DashboardChartCard
+                    <DashboardTarjetaGrafico
                         title="Número de atenciones"
                         description="Reporte semanal de pacientes ingresados"
                     >
-                        <DashboardLineChart data={MOCK_LINE_CHART_DATA} />
-                    </DashboardChartCard>
+                        {(periodo) => <DashboardGraficoLineas data={MOCK_LINE_CHART_DATA[periodo]} />}
+                    </DashboardTarjetaGrafico>
                 </div>
             </div>
 
-            {/* Gráficos inferiores de distribución */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <DashboardChartCard
+            {/* Gráficos de distribución */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
+                <DashboardTarjetaGrafico
                     title="Distribución por sexo"
                     description="Clasificación de pacientes por género registrado"
                 >
-                    <DashboardDonutChart data={MOCK_SEX_DATA} />
-                </DashboardChartCard>
+                    {(periodo) => <DashboardGraficoDona data={MOCK_SEX_DATA[periodo]} />}
+                </DashboardTarjetaGrafico>
 
-                <DashboardChartCard
+                <DashboardTarjetaGrafico
                     title="Distribución por grupo etario"
                     description="Clasificación por edades del total de pacientes"
                 >
-                    <DashboardBarChart data={MOCK_AGE_DATA} />
-                </DashboardChartCard>
+                    {(periodo) => <DashboardGraficoBarras data={MOCK_AGE_DATA[periodo]} />}
+                </DashboardTarjetaGrafico>
             </div>
         </div>
     );
