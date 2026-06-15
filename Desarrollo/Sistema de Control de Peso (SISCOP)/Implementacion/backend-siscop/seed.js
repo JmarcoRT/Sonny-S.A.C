@@ -26,7 +26,7 @@ const USUARIOS = [
     email:     'c.silva@hospital.gob.pe',
     usuario:   'nutri',
     password:  'siscop123',
-    rol:       'nutricionista',
+    rol:       'Nutricionista',
   },
   {
     nombre:    'Lucía',
@@ -34,7 +34,7 @@ const USUARIOS = [
     email:     'l.mendoza@hospital.gob.pe',
     usuario:   'lucia',
     password:  'siscop123',
-    rol:       'nutricionista',
+    rol:       'Nutricionista',
   },
   {
     nombre:    'Roberto',
@@ -42,7 +42,7 @@ const USUARIOS = [
     email:     'r.vargas@hospital.gob.pe',
     usuario:   'recep',
     password:  'siscop123',
-    rol:       'recepcionista',
+    rol:       'Recepcionista',
   },
   {
     nombre:    'María',
@@ -50,7 +50,7 @@ const USUARIOS = [
     email:     'm.gomez@hospital.gob.pe',
     usuario:   'maria',
     password:  'siscop123',
-    rol:       'recepcionista',
+    rol:       'Recepcionista',
   },
 ];
 
