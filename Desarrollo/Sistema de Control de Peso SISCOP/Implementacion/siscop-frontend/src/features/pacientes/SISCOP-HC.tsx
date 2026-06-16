@@ -13,7 +13,8 @@ import Paginacion from '../../components/ui/Paginacion';
 import ModalConfirmacion from '../../components/ui/ModalConfirmacion';
 
 import { obtenerPaciente, type PacienteBackend} from '../../services/pacientes';
-import { listarEvaluaciones } from '../../services/evaluacionService';
+import { listarEvaluaciones, actualizarEvaluacion } from '../../services/evaluacionService';
+import { ApiError } from '../../services/api';
 import type { EvaluacionBackend } from '../../services/evaluacionService';
 
 function adaptarPaciente(raw: PacienteBackend): Paciente {
@@ -120,28 +121,26 @@ export default function SiscopHc() {
     // Todas las evaluaciones del paciente, de más reciente a más antigua
     const [todasLasEvaluaciones, setTodasLasEvaluaciones] = useState<Evaluacion[]>([]);
 
+    const cargarEvaluaciones = async () => {
+        if (!pacienteId) { setTodasLasEvaluaciones([]); return; }
+        try {
+            const resp = await listarEvaluaciones(pacienteId);
+            const adaptadas = resp.data
+                .map(adaptarEvaluacion)
+                .sort((a, b) => {
+                    const dA = a.fecha.split('-').reverse().join('-');
+                    const dB = b.fecha.split('-').reverse().join('-');
+                    return new Date(dB).getTime() - new Date(dA).getTime();
+                });
+            setTodasLasEvaluaciones(adaptadas);
+        } catch {
+            setTodasLasEvaluaciones([]);
+        }
+    };
+
     useEffect(() => {
-        let activo = true;
-        (async () => {
-            if (!pacienteId) {
-                if (activo) setTodasLasEvaluaciones([]);
-                return;
-            }
-            try {
-                const resp = await listarEvaluaciones(pacienteId); // { ok, data }
-                const adaptadas = resp.data
-                    .map(adaptarEvaluacion)
-                    .sort((a, b) => {
-                        const dA = a.fecha.split('-').reverse().join('-');
-                        const dB = b.fecha.split('-').reverse().join('-');
-                        return new Date(dB).getTime() - new Date(dA).getTime();
-                    });
-                if (activo) setTodasLasEvaluaciones(adaptadas);
-            } catch {
-                if (activo) setTodasLasEvaluaciones([]);
-            }
-        })();
-        return () => { activo = false; };
+        cargarEvaluaciones();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pacienteId]);
 
     // Filtrar evaluaciones
@@ -299,12 +298,22 @@ export default function SiscopHc() {
                     setIsEditarModalOpen(false);
                     setSelectedEval(null);
                 }}
-                onSave={(updatedEval, editProximoControl) => {
-                    if (selectedEval) {
-                        Object.assign(selectedEval, {
-                            ...updatedEval,
-                            fechaProximoControl: editProximoControl ? editProximoControl.split('-').reverse().join('-') : updatedEval.fechaProximoControl
+                onSave={async (updatedEval, editProximoControl) => {
+                    if (!selectedEval) return;
+                    try {
+                        await actualizarEvaluacion(selectedEval.id, {
+                            id_paciente: Number(pacienteId),
+                            peso_kg: updatedEval.peso,
+                            talla_cm: updatedEval.talla,
+                            perimetro_abdom_cm: updatedEval.perimetroAbdominal,
+                            recomendaciones_ali: updatedEval.indicaciones,
+                            fecha_proximo_ctrl: editProximoControl || undefined,
                         });
+
+                        await cargarEvaluaciones(); // ← recarga desde el backend (dato real)
+
+                        setIsEditarModalOpen(false);
+                        setSelectedEval(null);
                         setModalConfirm({
                             isOpen: true,
                             title: '¡Operación Exitosa!',
@@ -314,9 +323,22 @@ export default function SiscopHc() {
                             cancelText: 'Cerrar',
                             onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
                         });
+                    } catch (err) {
+                        const msg = err instanceof ApiError
+                            ? err.message
+                            : 'No se pudo guardar la evaluación.';
+                        setIsEditarModalOpen(false);
+                        setSelectedEval(null);
+                        setModalConfirm({
+                            isOpen: true,
+                            title: 'Error al Guardar',
+                            message: msg, // ← acá sale el aviso de "plazo de 24h vencido" si aplica
+                            type: 'danger',
+                            confirmText: 'Cerrar',
+                            cancelText: 'Cerrar',
+                            onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+                        });
                     }
-                    setIsEditarModalOpen(false);
-                    setSelectedEval(null);
                 }}
             />
 
