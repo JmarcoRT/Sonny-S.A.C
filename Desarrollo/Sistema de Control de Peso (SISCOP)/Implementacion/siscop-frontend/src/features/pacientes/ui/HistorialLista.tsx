@@ -5,7 +5,7 @@ if (typeof window !== 'undefined') {
   (window as any).Buffer = (window as any).Buffer || Buffer;
 }
 import type { Evaluacion } from '../../../mocks/mockPacientes';
-import { MOCK_PACIENTES } from '../../../mocks/mockPacientes';
+import { obtenerPaciente } from '../../../services/pacientes';
 import ModalVisorPdf from '../../../components/ModalVisorPdf';
 import { ReportePDF } from '../../../components/ReportePDF';
 
@@ -35,16 +35,17 @@ export function HistorialLista({
   const displayFecha = (fechaStr: string) => fechaStr.replace(/-/g, ' / ');
 
   const handlePrintPDF = async (ev: Evaluacion) => {
-    const { pdf } = await import('@react-pdf/renderer');
-    const paciente = MOCK_PACIENTES.find(p => p.id === (pacienteId || ev.pacienteId));
+      const { pdf } = await import('@react-pdf/renderer');
+      const resp = await obtenerPaciente(pacienteId || ev.pacienteId);
+      const paciente = resp.data;
 
-    const evaluationWithPatient = { ...ev, paciente };
+      const evaluationWithPatient = { ...ev, paciente };
 
-    const blob = await pdf(<ReportePDF evaluacion={evaluationWithPatient} />).toBlob();
-    const url = URL.createObjectURL(blob);
-    setPdfBlobUrl(url);
-    setPdfFileName(`${paciente?.documento || 'paciente'}-${ev.fecha}.pdf`);
-    setShowModal(true);
+      const blob = await pdf(<ReportePDF evaluacion={evaluationWithPatient} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      setPdfBlobUrl(url);
+      setPdfFileName(`${paciente?.documento || 'paciente'}-${ev.fecha}.pdf`);
+      setShowModal(true);
   };
 
   if (evaluaciones.length === 0) {
