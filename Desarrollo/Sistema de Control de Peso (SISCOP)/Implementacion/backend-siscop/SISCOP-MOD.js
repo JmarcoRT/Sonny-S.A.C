@@ -46,12 +46,11 @@ const Usuario = sequelize.define(
       allowNull: false,
     },
     rol: {
-      type:      DataTypes.ENUM('recepcionista', 'nutricionista'),
-      allowNull: false,
+      type: DataTypes.ENUM('Nutricionista', 'Recepcionista'),
       validate: {
         isIn: {
-          args: [['recepcionista', 'nutricionista']],
-          msg:  'El rol debe ser "recepcionista" o "nutricionista".',
+          args: [['Nutricionista', 'Recepcionista']],
+          msg: 'El rol debe ser "Recepcionista" o "Nutricionista".',
         },
       },
     },
