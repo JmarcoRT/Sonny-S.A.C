@@ -129,6 +129,28 @@ router.post(
   })
 );
 
+router.get(
+  '/evaluaciones/:id',
+  requireAuth,
+  validarIdParam,
+  wrap(async (req, res) => {
+    const data = await evaluacionesSrv.obtenerPorId(req.params.id);
+    res.json({ ok: true, data });
+  })
+);
+
+router.put(
+  '/evaluaciones/:id',
+  requireAuth,
+  requireRol('Nutricionista'),
+  validarIdParam,
+  validarEvaluacion,
+  wrap(async (req, res) => {
+    const data = await evaluacionesSrv.actualizar(req.params.id, req.body, req.auth.id, req.ip);
+    res.json({ ok: true, data });
+  })
+);
+
 // ═════════════════════════════════════════════
 //  DASHBOARD
 // ═════════════════════════════════════════════

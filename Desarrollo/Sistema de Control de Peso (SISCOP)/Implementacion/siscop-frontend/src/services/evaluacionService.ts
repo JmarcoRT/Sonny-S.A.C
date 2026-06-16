@@ -49,3 +49,19 @@ export async function crearEvaluacion(data: CrearEvaluacionInput) {
         { method: 'POST', body: data }
     );
 }
+
+// OBTENER UNA EVALUACIÓN POR ID
+export async function obtenerEvaluacion(id: string | number) {
+    return await apiRequest<{ ok: true; data: EvaluacionBackend }>(
+        `/evaluaciones/${id}`,
+        { method: 'GET' }
+    );
+}
+
+// ACTUALIZAR EVALUACIÓN (solo Nutricionista en el backend)
+export async function actualizarEvaluacion(id: string | number, data: CrearEvaluacionInput) {
+    return await apiRequest<{ ok: true; data: EvaluacionBackend }>(
+        `/evaluaciones/${id}`,
+        { method: 'PUT', body: data }
+    );
+}

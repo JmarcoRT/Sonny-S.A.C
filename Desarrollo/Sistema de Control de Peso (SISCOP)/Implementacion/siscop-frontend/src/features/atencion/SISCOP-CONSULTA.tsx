@@ -1,7 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Activity } from 'lucide-react';
-import { MOCK_PACIENTES, MOCK_EVALUACIONES } from '../../mocks/mockPacientes';
+import type { Paciente } from '../../mocks/mockPacientes';
+import { obtenerPaciente } from '../../services/pacientes';
+import { obtenerEvaluacion, actualizarEvaluacion } from '../../services/evaluacionService';
+import { ApiError } from '../../services/api';
 import { Button } from '../../components/ui/Boton';
 import CampoTexto from '../../components/ui/CampoTexto';
 import ModalConfirmacion from '../../components/ui/ModalConfirmacion';
@@ -31,16 +34,42 @@ export default function SiscopMate() {
     });
 
     // Buscar la evaluacion a editar
-    const evaluacionExistente = useMemo(() => {
-        if (!atencionId) return null;
-        return MOCK_EVALUACIONES.find(e => e.id === atencionId) || null;
-    }, [atencionId]);
+    const [evaluacionExistente, setEvaluacionExistente] = useState<{
+        id: string; peso: number; talla: number; perimetroAbdominal: number;
+        indicaciones: string; fecha: string;
+    } | null>(null);
+    const [paciente, setPaciente] = useState<Paciente | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    // Buscar el paciente
-    const paciente = useMemo(() => {
-        if (!pacienteId) return null;
-        return MOCK_PACIENTES.find(p => p.id === pacienteId) || null;
-    }, [pacienteId]);
+    useEffect(() => {
+        let activo = true;
+        (async () => {
+            if (!atencionId || !pacienteId) { if (activo) setLoading(false); return; }
+            try {
+                setLoading(true);
+                const [evResp, pacResp] = await Promise.all([
+                    obtenerEvaluacion(atencionId),
+                    obtenerPaciente(pacienteId),
+                ]);
+                if (!activo) return;
+                const ev = evResp.data;
+                setEvaluacionExistente({
+                    id: ev.id,
+                    peso: ev.peso,
+                    talla: ev.talla,
+                    perimetroAbdominal: ev.perimetroAbdominal,
+                    indicaciones: ev.indicaciones,
+                    fecha: new Date(ev.fecha).toLocaleDateString('es-PE'),
+                });
+                setPaciente({ ...pacResp.data, telefono: pacResp.data.telefono ?? '' });
+            } catch {
+                if (activo) { setEvaluacionExistente(null); setPaciente(null); }
+            } finally {
+                if (activo) setLoading(false);
+            }
+        })();
+        return () => { activo = false; };
+    }, [atencionId, pacienteId]);
 
     // Inputs state
     const [peso, setPeso] = useState<string>('');
@@ -160,33 +189,48 @@ export default function SiscopMate() {
                 cancelText: 'Cancelar',
                 onConfirm: async () => {
                     setModalConfirm(prev => ({ ...prev, isLoading: true }));
-
-                    // Actualizar datos de la evaluacion en el mock
-                    evaluacionExistente.peso = pesoNum;
-                    evaluacionExistente.talla = tallaNum;
-                    evaluacionExistente.perimetroAbdominal = perimetroNum;
-                    evaluacionExistente.imc = parseFloat(imc.toFixed(1));
-                    evaluacionExistente.clasificacionImc = clasificacion;
-                    evaluacionExistente.indicaciones = indicaciones;
-
-                    setModalConfirm({
-                        isOpen: true,
-                        title: '¡Cambios Guardados!',
-                        message: 'La evaluación médica ha sido modificada correctamente en el sistema.',
-                        type: 'success',
-                        confirmText: 'Aceptar',
-                        cancelText: 'Cerrar',
-                        onConfirm: () => {
-                            setModalConfirm(prev => ({ ...prev, isOpen: false }));
-                            handleBack();
-                        }
-                    });
+                    try {
+                        await actualizarEvaluacion(evaluacionExistente.id, {
+                            id_paciente: Number(pacienteId),
+                            peso_kg: pesoNum,
+                            talla_cm: tallaNum,
+                            perimetro_abdom_cm: perimetroNum,
+                            recomendaciones_ali: indicaciones.trim(), // opción C
+                        });
+                        setModalConfirm({
+                            isOpen: true,
+                            title: '¡Cambios Guardados!',
+                            message: 'La evaluación médica ha sido modificada correctamente en el sistema.',
+                            type: 'success',
+                            confirmText: 'Aceptar',
+                            cancelText: 'Cerrar',
+                            onConfirm: () => {
+                                setModalConfirm(prev => ({ ...prev, isOpen: false }));
+                                handleBack();
+                            }
+                        });
+                    } catch (err) {
+                        const msg = err instanceof ApiError ? err.message : 'No se pudo guardar la evaluación.';
+                        setModalConfirm({
+                            isOpen: true,
+                            title: 'Error al Guardar',
+                            message: msg,   // ← acá saldrá el aviso de "plazo de 24h vencido" si aplica
+                            type: 'danger',
+                            confirmText: 'Cerrar',
+                            cancelText: 'Cerrar',
+                            onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+                        });
+                    }
                 }
             });
         } else {
             showWarning('No se encontró la consulta a editar.');
         }
     };
+
+    if (loading) {
+        return <div className="p-8 text-center text-slate-400">Cargando consulta…</div>;
+    }
 
     if (!paciente || !evaluacionExistente) {
         return (

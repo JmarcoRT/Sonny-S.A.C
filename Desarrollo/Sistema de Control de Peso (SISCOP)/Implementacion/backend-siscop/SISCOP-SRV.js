@@ -265,6 +265,76 @@ const evaluacionesSrv = {
 
     return nueva;
   },
+
+  async obtenerPorId(id) {
+    const ev = await Evaluacion.findByPk(id, {
+      include: [
+        { model: Usuario, as: 'nutricionista', attributes: ['id_usuario', 'nombre', 'apellidos'] },
+      ],
+    });
+    if (!ev) {
+      const e = new Error('Evaluación no encontrada.');
+      e.status = 404;
+      throw e;
+    }
+    return {
+      id:                 String(ev.id_evaluacion),
+      pacienteId:         String(ev.id_paciente),
+      fecha:              ev.fecha_evaluacion,
+      peso:               parseFloat(ev.peso_kg),
+      talla:              parseFloat(ev.talla_cm),
+      perimetroAbdominal: ev.perimetro_abdom_cm ? parseFloat(ev.perimetro_abdom_cm) : null,
+      imc:                parseFloat(ev.imc),
+      clasificacionImc:   ev.clasificacion_imc,
+      indicaciones:       [ev.recomendaciones_ali, ev.recomendaciones_fis].filter(Boolean).join('\n\n'),
+      recomendacionesAli: ev.recomendaciones_ali,
+      recomendacionesFis: ev.recomendaciones_fis,
+      fechaProximoCtrl:   ev.fecha_proximo_ctrl,
+      editableHasta:      ev.editable_hasta,
+      nutricionista:      ev.nutricionista
+        ? `${ev.nutricionista.nombre} ${ev.nutricionista.apellidos}`
+        : null,
+    };
+  },
+
+  async actualizar(id, datos, nutricionistaId, ip) {
+    const ev = await Evaluacion.findByPk(id);
+    if (!ev) {
+      const e = new Error('Evaluación no encontrada.');
+      e.status = 404;
+      throw e;
+    }
+
+    // ── Validación de las 24h (editable_hasta) ──
+    if (ev.editable_hasta && new Date() > new Date(ev.editable_hasta)) {
+      const e = new Error('El plazo de edición de esta evaluación (24 h) ya venció.');
+      e.status = 409;
+      throw e;
+    }
+
+    const previos = ev.toJSON();
+
+    await ev.update({
+      peso_kg:             datos.peso_kg             ?? ev.peso_kg,
+      talla_cm:            datos.talla_cm            ?? ev.talla_cm,
+      perimetro_abdom_cm:  datos.perimetro_abdom_cm  ?? ev.perimetro_abdom_cm,
+      recomendaciones_ali: datos.recomendaciones_ali ?? ev.recomendaciones_ali,
+      recomendaciones_fis: datos.recomendaciones_fis ?? ev.recomendaciones_fis,
+      fecha_proximo_ctrl:  datos.fecha_proximo_ctrl  ?? ev.fecha_proximo_ctrl,
+    });
+
+    await registrarAuditoria({
+      id_usuario:    nutricionistaId,
+      accion:        'UPDATE',
+      entidad:       'EVALUACION',
+      id_entidad:    ev.id_evaluacion,
+      datos_previos: previos,
+      datos_nuevos:  ev.toJSON(),
+      ip_origen:     ip,
+    });
+
+    return this.obtenerPorId(ev.id_evaluacion);
+  },
 };
 
 // ═══════════════════════════════════════════════
