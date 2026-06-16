@@ -173,12 +173,6 @@ export default function SiscopMate() {
         }
 
         if (evaluacionExistente) {
-            // Clasificacion
-            let clasificacion: 'Bajo peso' | 'Normal' | 'Sobrepeso' | 'Obesidad' = 'Normal';
-            if (imc < 18.5) clasificacion = 'Bajo peso';
-            else if (imc < 25) clasificacion = 'Normal';
-            else if (imc < 30) clasificacion = 'Sobrepeso';
-            else clasificacion = 'Obesidad';
 
             setModalConfirm({
                 isOpen: true,

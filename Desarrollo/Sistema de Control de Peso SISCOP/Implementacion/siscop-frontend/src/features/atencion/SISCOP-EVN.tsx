@@ -244,26 +244,6 @@ export default function SiscopEvn() {
             return;
         }
 
-        // Fecha del control actual (hoy)
-        const today = new Date();
-        const dToday = today.getDate().toString().padStart(2, '0');
-        const mToday = (today.getMonth() + 1).toString().padStart(2, '0');
-        const yToday = today.getFullYear();
-        const fechaActualFormateada = `${dToday}-${mToday}-${yToday}`;
-
-        // Fecha del próximo control agendado (del calendario)
-        const dNext = selectedDate.getDate().toString().padStart(2, '0');
-        const mNext = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
-        const yNext = selectedDate.getFullYear();
-        const fechaProximoFormateada = `${dNext}-${mNext}-${yNext}`;
-
-        // Clasificación
-        let clasificacion: 'Bajo peso' | 'Normal' | 'Sobrepeso' | 'Obesidad' = 'Normal';
-        if (imc < 18.5) clasificacion = 'Bajo peso';
-        else if (imc < 25) clasificacion = 'Normal';
-        else if (imc < 30) clasificacion = 'Sobrepeso';
-        else clasificacion = 'Obesidad';
-
         // Guardar la evaluación
         setModalConfirm({
             isOpen: true,
