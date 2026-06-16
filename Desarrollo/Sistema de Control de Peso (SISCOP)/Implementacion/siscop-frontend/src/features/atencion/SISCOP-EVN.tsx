@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Activity, FileText, Calendar } from 'lucide-react';
 import SiscopWrap from './SISCOP-WRAP';
-import { MOCK_PACIENTES, MOCK_EVALUACIONES } from '../../mocks/mockPacientes';
+import { crearEvaluacion, listarEvaluaciones } from '../../services/evaluacionService';
+import { ApiError } from '../../services/api';
 import { Button } from '../../components/ui/Boton';
 import CampoTexto from '../../components/ui/CampoTexto';
 import ModalConfirmacion from '../../components/ui/ModalConfirmacion';
@@ -71,22 +72,7 @@ export default function SiscopEvn() {
             setPeso(savedPeso);
             setPerimetro(savedPerimetro);
             setIndicaciones(savedIndicaciones);
-
-            if (savedTalla) {
-                setTalla(savedTalla);
-            } else {
-                const evs = MOCK_EVALUACIONES.filter(e => e.pacienteId === pacienteId);
-                if (evs.length > 0) {
-                    const ordenadas = [...evs].sort((a, b) => {
-                        const dateA = a.fecha.split('-').reverse().join('-');
-                        const dateB = b.fecha.split('-').reverse().join('-');
-                        return new Date(dateB).getTime() - new Date(dateA).getTime();
-                    });
-                    setTalla(ordenadas[0].talla.toString());
-                } else {
-                    setTalla('');
-                }
-            }
+            setTalla(savedTalla);
 
             const savedDate = sessionStorage.getItem(`selectedDate_${pacienteId}`);
             if (savedDate) {
@@ -113,6 +99,25 @@ export default function SiscopEvn() {
         sessionStorage.setItem(`indicaciones_${pacienteId}`, indicaciones);
         sessionStorage.setItem(`selectedDate_${pacienteId}`, selectedDate.toISOString());
     }, [peso, talla, perimetro, indicaciones, selectedDate, pacienteId]);
+
+    useEffect(() => {
+        let activo = true;
+        (async () => {
+            if (!pacienteId) return;
+            if (sessionStorage.getItem(`talla_${pacienteId}`)) return;
+            try {
+                const resp = await listarEvaluaciones(pacienteId);
+                if (!activo || resp.data.length === 0) return;
+                const ordenadas = [...resp.data].sort(
+                    (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+                );
+                if (activo) setTalla(prev => prev || String(ordenadas[0].talla));
+            } catch {
+                /* sin sugerencia */
+            }
+        })();
+        return () => { activo = false; };
+    }, [pacienteId]);
 
     // Calcular IMC en tiempo real
     const imc = useMemo(() => {
@@ -259,21 +264,7 @@ export default function SiscopEvn() {
         else if (imc < 30) clasificacion = 'Sobrepeso';
         else clasificacion = 'Obesidad';
 
-        // Guardar la evaluación en el mock mutable
-        const nuevaEvaluacion = {
-            id: (MOCK_EVALUACIONES.length + 1).toString(),
-            pacienteId,
-            fecha: fechaActualFormateada, // Fecha actual para este control
-            fechaProximoControl: fechaProximoFormateada, // Próximo control programado
-            tipo: 'Control Nutricional',
-            peso: pesoNum,
-            talla: tallaNum,
-            perimetroAbdominal: perimetroNum,
-            imc: parseFloat(imc.toFixed(1)),
-            clasificacionImc: clasificacion,
-            indicaciones: indicaciones
-        };
-
+        // Guardar la evaluación
         setModalConfirm({
             isOpen: true,
             title: 'Confirmar Registro',
@@ -283,44 +274,56 @@ export default function SiscopEvn() {
             cancelText: 'Cancelar',
             onConfirm: async () => {
                 setModalConfirm(prev => ({ ...prev, isLoading: true }));
-                
-                // Guardar
-                MOCK_EVALUACIONES.unshift(nuevaEvaluacion);
+                try {
+                    await crearEvaluacion({
+                        id_paciente: Number(pacienteId),
+                        peso_kg: pesoNum,
+                        talla_cm: tallaNum,
+                        perimetro_abdom_cm: perimetroNum,
+                        recomendaciones_ali: indicaciones.trim(), // opción C: todo acá
+                        fecha_proximo_ctrl: selectedDate.toISOString(),
+                    });
 
-                // Actualizar la fechaUltimoRegistro del paciente en el array MOCK_PACIENTES
-                const pac = MOCK_PACIENTES.find(p => p.id === pacienteId);
-                if (pac) {
-                    pac.fechaUltimoRegistro = `${yToday} / ${mToday} / ${dToday}`;
+                    setModalConfirm({
+                        isOpen: true,
+                        title: '¡Operación Exitosa!',
+                        message: 'La evaluación nutricional ha sido guardada correctamente en el historial clínico del paciente.',
+                        type: 'success',
+                        confirmText: 'Aceptar',
+                        cancelText: 'Cerrar',
+                        onConfirm: () => {
+                            sessionStorage.removeItem(`peso_${pacienteId}`);
+                            sessionStorage.removeItem(`talla_${pacienteId}`);
+                            sessionStorage.removeItem(`perimetro_${pacienteId}`);
+                            sessionStorage.removeItem(`indicaciones_${pacienteId}`);
+                            sessionStorage.removeItem(`selectedDate_${pacienteId}`);
+
+                            setPeso('');
+                            setTalla('');
+                            setPerimetro('');
+                            setIndicaciones('');
+                            const d = new Date();
+                            d.setMonth(d.getMonth() + 1);
+                            setSelectedDate(d);
+
+                            setModalConfirm(prev => ({ ...prev, isOpen: false }));
+                            navigate(`/nutricionista/pacientes/atencion/historial?id=${pacienteId}`);
+                        }
+                    });
+                } catch (err) {
+                    const msg = err instanceof ApiError
+                        ? err.message
+                        : 'No se pudo guardar la evaluación. Revisa tu conexión.';
+                    setModalConfirm({
+                        isOpen: true,
+                        title: 'Error al Registrar',
+                        message: msg,
+                        type: 'danger',
+                        confirmText: 'Cerrar',
+                        cancelText: 'Cerrar',
+                        onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
+                    });
                 }
-
-                setModalConfirm({
-                    isOpen: true,
-                    title: '¡Operación Exitosa!',
-                    message: 'La evaluación nutricional ha sido guardada correctamente en el historial clínico del paciente.',
-                    type: 'success',
-                    confirmText: 'Aceptar',
-                    cancelText: 'Cerrar',
-                    onConfirm: () => {
-                        // Limpiar sessionStorage del paciente
-                        sessionStorage.removeItem(`peso_${pacienteId}`);
-                        sessionStorage.removeItem(`talla_${pacienteId}`);
-                        sessionStorage.removeItem(`perimetro_${pacienteId}`);
-                        sessionStorage.removeItem(`indicaciones_${pacienteId}`);
-                        sessionStorage.removeItem(`selectedDate_${pacienteId}`);
-
-                        // Limpiar estados locales para evitar guardado al desmontar
-                        setPeso('');
-                        setTalla('');
-                        setPerimetro('');
-                        setIndicaciones('');
-                        const d = new Date();
-                        d.setMonth(d.getMonth() + 1);
-                        setSelectedDate(d);
-
-                        setModalConfirm(prev => ({ ...prev, isOpen: false }));
-                        navigate(`/nutricionista/pacientes/atencion/historial?id=${pacienteId}`);
-                    }
-                });
             }
         });
     };

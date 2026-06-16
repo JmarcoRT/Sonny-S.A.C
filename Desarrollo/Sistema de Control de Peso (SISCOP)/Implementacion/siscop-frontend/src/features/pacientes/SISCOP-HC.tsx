@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import SiscopWrap from '../atencion/SISCOP-WRAP';
-import { MOCK_PACIENTES, MOCK_EVALUACIONES } from '../../mocks/mockPacientes';
+import { MOCK_PACIENTES, MOCK_EVALUACIONES, type Paciente } from '../../mocks/mockPacientes';
 import type { Evaluacion } from '../../mocks/mockPacientes';
 
 import { HistorialFiltros } from './ui/HistorialFiltros';
@@ -11,6 +11,45 @@ import { HistorialModalVer } from './ui/HistorialModalVer';
 import { HistorialModalEditar } from './ui/HistorialModalEditar';
 import Paginacion from '../../components/ui/Paginacion';
 import ModalConfirmacion from '../../components/ui/ModalConfirmacion';
+
+import { obtenerPaciente, type PacienteBackend} from '../../services/pacientes';
+import { listarEvaluaciones } from '../../services/evaluacionService';
+import type { EvaluacionBackend } from '../../services/evaluacionService';
+
+function adaptarPaciente(raw: PacienteBackend): Paciente {
+    return {
+        ...raw,
+        telefono: raw.telefono ?? '',
+    };
+}
+
+function isoADmy(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+}
+
+function adaptarEvaluacion(raw: EvaluacionBackend): Evaluacion {
+    return {
+        id: String(raw.id),
+        pacienteId: String(raw.pacienteId),
+        fecha: isoADmy(raw.fecha),
+        tipo: 'Control Nutricional',
+        peso: raw.peso,
+        talla: raw.talla,
+        perimetroAbdominal: raw.perimetroAbdominal,
+        imc: raw.imc,
+        clasificacionImc: raw.clasificacionImc,
+        indicaciones: raw.indicaciones,
+        fechaProximoControl: raw.fechaProximoCtrl
+            ? isoADmy(raw.fechaProximoCtrl)
+            : undefined,
+    };
+}
 
 export default function SiscopHc() {
     const [searchParams] = useSearchParams();
@@ -21,9 +60,27 @@ export default function SiscopHc() {
     const isNutricionista = location.pathname.includes('/nutricionista');
 
     // Cargar paciente
-    const paciente = useMemo(() => {
-        if (!pacienteId) return null;
-        return MOCK_PACIENTES.find((p) => p.id === pacienteId) || null;
+    const [paciente, setPaciente] = useState<Paciente | null>(null);
+    const [loadingPac, setLoadingPac] = useState<boolean>(true);
+
+    useEffect(() => {
+        let activo = true;
+        (async () => {
+            if (!pacienteId) {
+                if (activo) { setPaciente(null); setLoadingPac(false); }
+                return;
+            }
+            try {
+                setLoadingPac(true);
+                const resp = await obtenerPaciente(pacienteId); // { ok, data }
+                if (activo) setPaciente(adaptarPaciente(resp.data));
+            } catch {
+                if (activo) setPaciente(null);
+            } finally {
+                if (activo) setLoadingPac(false);
+            }
+        })();
+        return () => { activo = false; };
     }, [pacienteId]);
 
     // Filtros de fecha (Estados locales para los dropdowns)
@@ -61,15 +118,30 @@ export default function SiscopHc() {
     });
 
     // Todas las evaluaciones del paciente, de más reciente a más antigua
-    const todasLasEvaluaciones = useMemo(() => {
-        if (!pacienteId) return [];
-        return MOCK_EVALUACIONES
-            .filter((e) => e.pacienteId === pacienteId)
-            .sort((a, b) => {
-                const dateA = a.fecha.split('-').reverse().join('-');
-                const dateB = b.fecha.split('-').reverse().join('-');
-                return new Date(dateB).getTime() - new Date(dateA).getTime();
-            });
+    const [todasLasEvaluaciones, setTodasLasEvaluaciones] = useState<Evaluacion[]>([]);
+
+    useEffect(() => {
+        let activo = true;
+        (async () => {
+            if (!pacienteId) {
+                if (activo) setTodasLasEvaluaciones([]);
+                return;
+            }
+            try {
+                const resp = await listarEvaluaciones(pacienteId); // { ok, data }
+                const adaptadas = resp.data
+                    .map(adaptarEvaluacion)
+                    .sort((a, b) => {
+                        const dA = a.fecha.split('-').reverse().join('-');
+                        const dB = b.fecha.split('-').reverse().join('-');
+                        return new Date(dB).getTime() - new Date(dA).getTime();
+                    });
+                if (activo) setTodasLasEvaluaciones(adaptadas);
+            } catch {
+                if (activo) setTodasLasEvaluaciones([]);
+            }
+        })();
+        return () => { activo = false; };
     }, [pacienteId]);
 
     // Filtrar evaluaciones
@@ -137,9 +209,6 @@ export default function SiscopHc() {
                             const dateB = b.fecha.split('-').reverse().join('-');
                             return new Date(dateB).getTime() - new Date(dateA).getTime();
                         });
-                        pac.fechaUltimoRegistro = pacEvaluaciones[0].fecha.replace(/-/g, ' / ');
-                    } else {
-                        pac.fechaUltimoRegistro = 'No reg.';
                     }
                 }
 
@@ -187,6 +256,10 @@ export default function SiscopHc() {
         </div>
     );
 
+    if (loadingPac) {
+        return <div className="p-8 text-center text-slate-400">Cargando paciente…</div>;
+    }
+    
     if (!paciente) {
         return (
             <div className="p-8 text-center bg-white border border-slate-100 rounded-2xl shadow-xs">

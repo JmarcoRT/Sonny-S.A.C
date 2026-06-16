@@ -22,6 +22,19 @@ export interface PacienteInput {
     telefono?: string;
 }
 
+export interface PacienteBackend {
+    id: string;
+    nombre: string;
+    apellido: string;
+    documento: string;
+    tipoDocumento: 'DNI' | 'Carnet de Extranjería';
+    sexo: 'Femenino' | 'Masculino';
+    edad: number;
+    telefono?: string | null;
+    fechaNacimiento: string;
+    fechaUltimoRegistro?: string;
+}
+
 // 1. LISTAR PACIENTES DESDE EL BACKEND
 export async function listarPacientes(params: {
     nombre?: string;
@@ -43,7 +56,7 @@ export async function listarPacientes(params: {
 
 // 2. OBTENER UN PACIENTE POR ID
 export async function obtenerPaciente(id: string | number) {
-    return await apiRequest<Paciente>(`/pacientes/${id}`, {
+    return await apiRequest<{ ok: true; data: PacienteBackend }>(`/pacientes/${id}`, {
         method: 'GET'
     });
 }

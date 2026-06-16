@@ -6,7 +6,6 @@ export interface Paciente {
     sexo: 'Femenino' | 'Masculino';
     edad: number;
     telefono: string;
-    fechaUltimoRegistro: string;
 }
 
 export const MOCK_PACIENTES: Paciente[] = [
@@ -18,7 +17,6 @@ export const MOCK_PACIENTES: Paciente[] = [
         sexo: 'Femenino',
         edad: 55,
         telefono: '955456876',
-        fechaUltimoRegistro: '2026 / 05 / 11'
     },
     {
         id: '2',
@@ -28,7 +26,6 @@ export const MOCK_PACIENTES: Paciente[] = [
         sexo: 'Masculino',
         edad: 42,
         telefono: '965214783',
-        fechaUltimoRegistro: '2026 / 05 / 11'
     },
     {
         id: '3',
@@ -38,7 +35,6 @@ export const MOCK_PACIENTES: Paciente[] = [
         sexo: 'Femenino',
         edad: 61,
         telefono: '956874123',
-        fechaUltimoRegistro: '2026 / 05 / 11'
     },
     {
         id: '4',
@@ -48,7 +44,6 @@ export const MOCK_PACIENTES: Paciente[] = [
         sexo: 'Masculino',
         edad: 47,
         telefono: '992341875',
-        fechaUltimoRegistro: '2026 / 05 / 11'
     },
     {
         id: '5',
@@ -58,7 +53,6 @@ export const MOCK_PACIENTES: Paciente[] = [
         sexo: 'Masculino',
         edad: 38,
         telefono: '964728315',
-        fechaUltimoRegistro: '2026 / 05 / 08'
     },
     {
         id: '6',
@@ -68,7 +62,6 @@ export const MOCK_PACIENTES: Paciente[] = [
         sexo: 'Femenino',
         edad: 23,
         telefono: '973812456',
-        fechaUltimoRegistro: '2026 / 05 / 08'
     },
     {
         id: '7',
@@ -78,7 +71,6 @@ export const MOCK_PACIENTES: Paciente[] = [
         sexo: 'Masculino',
         edad: 34,
         telefono: '981245670',
-        fechaUltimoRegistro: '2026 / 05 / 08'
     },
     {
         id: '8',
@@ -88,7 +80,6 @@ export const MOCK_PACIENTES: Paciente[] = [
         sexo: 'Masculino',
         edad: 57,
         telefono: '963741852',
-        fechaUltimoRegistro: '2026 / 05 / 05'
     },
     {
         id: '9',
@@ -98,7 +89,6 @@ export const MOCK_PACIENTES: Paciente[] = [
         sexo: 'Femenino',
         edad: 19,
         telefono: '981563247',
-        fechaUltimoRegistro: '2026 / 05 / 05'
     },
     {
         id: '10',
@@ -108,7 +98,6 @@ export const MOCK_PACIENTES: Paciente[] = [
         sexo: 'Femenino',
         edad: 45,
         telefono: '978456123',
-        fechaUltimoRegistro: '2026 / 05 / 05'
     }
 ];
 

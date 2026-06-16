@@ -1,10 +1,48 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { User, X, Activity, TrendingUp, FileText } from 'lucide-react';
-import { MOCK_PACIENTES, MOCK_EVALUACIONES } from '../../mocks/mockPacientes';
+import { useState, useEffect } from 'react';
+import type { Paciente, Evaluacion } from '../../mocks/mockPacientes';
+import { obtenerPaciente, type PacienteBackend } from '../../services/pacientes';
+import { listarEvaluaciones, type EvaluacionBackend } from '../../services/evaluacionService';
 
 interface AtencionWrapperProps {
     children: React.ReactNode;
+}
+
+function adaptarPaciente(raw: PacienteBackend): Paciente {
+    return {
+        ...raw,
+        telefono: raw.telefono ?? '',
+    };
+}
+
+function isoADmy(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+}
+
+function adaptarEvaluacion(raw: EvaluacionBackend): Evaluacion {
+    return {
+        id: String(raw.id),
+        pacienteId: String(raw.pacienteId),
+        fecha: isoADmy(raw.fecha),
+        tipo: 'Control Nutricional',
+        peso: raw.peso,
+        talla: raw.talla,
+        perimetroAbdominal: raw.perimetroAbdominal,
+        imc: raw.imc,
+        clasificacionImc: raw.clasificacionImc,
+        indicaciones: raw.indicaciones,
+        fechaProximoControl: raw.fechaProximoCtrl
+            ? isoADmy(raw.fechaProximoCtrl)
+            : undefined,
+    };
 }
 
 export default function SiscopWrap({ children }: AtencionWrapperProps) {
@@ -15,23 +53,56 @@ export default function SiscopWrap({ children }: AtencionWrapperProps) {
     const pacienteId = searchParams.get('id');
 
     // Cargar paciente
-    const paciente = useMemo(() => {
-        if (!pacienteId) return null;
-        return MOCK_PACIENTES.find((p) => p.id === pacienteId) || null;
+    const [paciente, setPaciente] = useState<Paciente | null>(null);
+    const [loadingPac, setLoadingPac] = useState<boolean>(true);
+
+    useEffect(() => {
+        let activo = true;
+        (async () => {
+            if (!pacienteId) {
+                if (activo) { setPaciente(null); setLoadingPac(false); }
+                return;
+            }
+            try {
+                setLoadingPac(true);
+                const resp = await obtenerPaciente(pacienteId);
+                if (activo) setPaciente(adaptarPaciente(resp.data));
+            } catch {
+                if (activo) setPaciente(null);
+            } finally {
+                if (activo) setLoadingPac(false);
+            }
+        })();
+        return () => { activo = false; };
     }, [pacienteId]);
 
     // Cargar evaluaciones del paciente para el timeline
-    const evaluaciones = useMemo(() => {
-        if (!pacienteId) return [];
-        return MOCK_EVALUACIONES
-            .filter((e) => e.pacienteId === pacienteId)
-            .sort((a, b) => {
-                // Ordenar por fecha descendente (DD-MM-YYYY)
-                const dateA = a.fecha.split('-').reverse().join('-');
-                const dateB = b.fecha.split('-').reverse().join('-');
-                return new Date(dateB).getTime() - new Date(dateA).getTime();
-            });
+    const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
+
+    useEffect(() => {
+        let activo = true;
+        (async () => {
+            if (!pacienteId) { if (activo) setEvaluaciones([]); return; }
+            try {
+                const resp = await listarEvaluaciones(pacienteId);
+                const adaptadas = resp.data
+                    .map(adaptarEvaluacion)
+                    .sort((a, b) => {
+                        const dA = a.fecha.split('-').reverse().join('-');
+                        const dB = b.fecha.split('-').reverse().join('-');
+                        return new Date(dB).getTime() - new Date(dA).getTime();
+                    });
+                if (activo) setEvaluaciones(adaptadas);
+            } catch {
+                if (activo) setEvaluaciones([]);
+            }
+        })();
+        return () => { activo = false; };
     }, [pacienteId]);
+
+    if (loadingPac) {
+        return <div className="p-8 text-center text-slate-400">Cargando atención…</div>;
+    }
 
     if (!pacienteId || !paciente) {
         return (
@@ -64,7 +135,7 @@ export default function SiscopWrap({ children }: AtencionWrapperProps) {
     return (
         <div className="flex flex-col h-full w-full overflow-hidden select-none">
             {/* Header del Paciente (Sub-headbar) */}
-            <div className="w-full bg-gradient-to-r from-[#E5F6FD] to-[#E2F2ED] border-b border-slate-200/80 px-8 py-3.5 flex justify-between items-center shadow-xs flex-shrink-0">
+            <div className="w-full bg-linear-to-r from-[#E5F6FD] to-[#E2F2ED] border-b border-slate-200/80 px-8 py-3.5 flex justify-between items-center shadow-xs shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="bg-white text-[#1A82C4] p-2.5 rounded-full flex items-center justify-center border border-slate-100 shadow-xs">
                         <User className="w-5 h-5" />
@@ -89,7 +160,7 @@ export default function SiscopWrap({ children }: AtencionWrapperProps) {
 
             {/* Layout Principal: Sub-Sidebar Izquierdo + Panel Contenedor Derecho */}
             <div className="flex flex-1 w-full bg-slate-50/50 overflow-hidden">
-                <aside className="w-[195px] bg-white border-r border-slate-200 p-4.5 flex flex-col space-y-6 h-full overflow-y-auto flex-shrink-0">
+                <aside className="w-48.75 bg-white border-r border-slate-200 p-4.5 flex flex-col space-y-6 h-full overflow-y-auto shrink-0">
                     {/* Resumen */}
                     <div className="space-y-4">
                         <h4 className="font-semibold text-slate-400 text-xs tracking-wider uppercase">Resumen</h4>
@@ -121,7 +192,7 @@ export default function SiscopWrap({ children }: AtencionWrapperProps) {
                                 {evaluaciones.slice(0, 3).map((evaluacion) => (
                                     <div key={evaluacion.id} className="relative">
                                         {/* Nodo del timeline */}
-                                        <div className="absolute -left-[20.5px] top-1.5 w-1.5 h-1.5 rounded-full bg-[#1A82C4] border border-white ring-4 ring-[#1A82C4]/10" />
+                                        <div className="absolute left-[-20.5px] top-1.5 w-1.5 h-1.5 rounded-full bg-[#1A82C4] border border-white ring-4 ring-[#1A82C4]/10" />
 
                                         <div className="space-y-0.5">
                                             <p className="text-xs font-semibold text-slate-400 tracking-wider">{evaluacion.fecha}</p>
