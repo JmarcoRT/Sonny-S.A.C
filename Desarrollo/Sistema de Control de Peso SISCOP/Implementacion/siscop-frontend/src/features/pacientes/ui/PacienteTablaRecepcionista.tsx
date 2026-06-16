@@ -20,7 +20,7 @@ export default function PacienteTablaRecepcionista({
                         <tr className="bg-slate-50 border-b border-slate-100">
                             <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">N° de documento</th>
                             <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Apellido y nombres</th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha último registro</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Teléfono</th>
                             <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
@@ -37,6 +37,9 @@ export default function PacienteTablaRecepcionista({
                                     <td className="px-6 py-4 text-sm text-slate-700 font-medium">{paciente.documento}</td>
                                     <td className="px-6 py-4 text-sm text-slate-700 font-medium">
                                         {paciente.apellido}, {paciente.nombre}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-slate-700 font-medium">
+                                        {paciente.telefono ? paciente.telefono : 'No registrado'}
                                     </td>
                                     <td className="px-6 py-4 text-sm">
                                         <div className="flex gap-2">
