@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Printer, Edit, Trash2 } from 'lucide-react';
+import { FileText, Printer, Edit } from 'lucide-react';
 import { Buffer } from 'buffer';
 if (typeof window !== 'undefined') {
   (window as any).Buffer = (window as any).Buffer || Buffer;
@@ -16,7 +16,6 @@ interface HistorialListaProps {
   pacienteId?: string;
   onVerRegistro: (ev: Evaluacion) => void;
   onEditarRegistro: (ev: Evaluacion) => void;
-  onEliminarRegistro: (ev: Evaluacion) => void;
 }
 
 export function HistorialLista({
@@ -26,7 +25,6 @@ export function HistorialLista({
   pacienteId,
   onVerRegistro,
   onEditarRegistro,
-  onEliminarRegistro,
 }: HistorialListaProps) {
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [pdfFileName, setPdfFileName] = useState<string>('reporte.pdf');
@@ -95,13 +93,6 @@ export function HistorialLista({
                     title="Editar Registro"
                   >
                     <Edit className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => onEliminarRegistro(ev)}
-                    className="text-red-500 hover:text-red-700 cursor-pointer transition-colors p-1"
-                    title="Eliminar Registro"
-                  >
-                    <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
               )}

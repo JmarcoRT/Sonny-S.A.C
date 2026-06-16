@@ -12,7 +12,6 @@ import {
     listarPacientes,
     crearPaciente,
     actualizarPaciente,
-    eliminarPaciente,
     type PacienteInput,
 } from '../../services/pacientes';
 import { ApiError } from '../../services/api';
@@ -191,43 +190,6 @@ export default function SiscopPac() {
         });
     };
 
-    const handleEliminarPatient = (paciente: Paciente) => {
-        setModalConfirm({
-            isOpen: true,
-            title: 'Confirmar Eliminación',
-            message: `¿Está seguro de que desea eliminar al paciente ${paciente.nombre} ${paciente.apellido}? Esta acción eliminará permanentemente su registro y todo su historial de evaluaciones de la plataforma.`,
-            type: 'danger',
-            confirmText: 'Eliminar',
-            cancelText: 'Cancelar',
-            onConfirm: async () => {
-                setModalConfirm(prev => ({ ...prev, isLoading: true }));
-                try {
-                    await eliminarPaciente(paciente.id);
-                    cargarPacientes();
-                    setModalConfirm({
-                        isOpen: true,
-                        title: '¡Registro Eliminado!',
-                        message: `El paciente ${paciente.nombre} ${paciente.apellido} ha sido retirado del sistema.`,
-                        type: 'success',
-                        confirmText: 'Aceptar',
-                        cancelText: 'Cerrar',
-                        onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
-                    });
-                } catch (err) {
-                    setModalConfirm({
-                        isOpen: true,
-                        title: 'Error al Eliminar',
-                        message: 'Ocurrió un error al intentar eliminar el registro del paciente.',
-                        type: 'danger',
-                        confirmText: 'Cerrar',
-                        cancelText: 'Cerrar',
-                        onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
-                    });
-                }
-            }
-        });
-    };
-
     return (
         <div className="space-y-6">
             <PacienteFiltros
@@ -273,7 +235,6 @@ export default function SiscopPac() {
                     pacientes={pacientesList}
                     onVerHistorial={handleVerHistorial}
                     onEditar={handleEditar}
-                    onEliminar={handleEliminarPatient}
                 />
             )}
 

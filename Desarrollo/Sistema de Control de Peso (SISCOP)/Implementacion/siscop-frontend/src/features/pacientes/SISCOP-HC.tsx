@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import SiscopWrap from '../atencion/SISCOP-WRAP';
-import { MOCK_PACIENTES, MOCK_EVALUACIONES, type Paciente } from '../../mocks/mockPacientes';
+import { type Paciente } from '../../mocks/mockPacientes';
 import type { Evaluacion } from '../../mocks/mockPacientes';
 
 import { HistorialFiltros } from './ui/HistorialFiltros';
@@ -183,48 +183,6 @@ export default function SiscopHc() {
         setIsEditarModalOpen(true);
     };
 
-    const handleEliminarRegistro = (ev: Evaluacion) => {
-        setModalConfirm({
-            isOpen: true,
-            title: 'Confirmar Eliminación',
-            message: `¿Está seguro de que desea eliminar la evaluación nutricional del día ${ev.fecha.replace(/-/g, ' / ')}? Esta acción es irreversible.`,
-            type: 'danger',
-            confirmText: 'Eliminar',
-            cancelText: 'Cancelar',
-            onConfirm: async () => {
-                setModalConfirm(prev => ({ ...prev, isLoading: true }));
-                
-                const idx = MOCK_EVALUACIONES.findIndex(item => item.id === ev.id);
-                if (idx !== -1) {
-                    MOCK_EVALUACIONES.splice(idx, 1);
-                }
-
-                // Si eliminamos la última evaluación, actualizar la fechaUltimoRegistro del paciente
-                const pacEvaluaciones = MOCK_EVALUACIONES.filter(e => e.pacienteId === pacienteId);
-                const pac = MOCK_PACIENTES.find(p => p.id === pacienteId);
-                if (pac) {
-                    if (pacEvaluaciones.length > 0) {
-                        pacEvaluaciones.sort((a, b) => {
-                            const dateA = a.fecha.split('-').reverse().join('-');
-                            const dateB = b.fecha.split('-').reverse().join('-');
-                            return new Date(dateB).getTime() - new Date(dateA).getTime();
-                        });
-                    }
-                }
-
-                setModalConfirm({
-                    isOpen: true,
-                    title: '¡Registro Eliminado!',
-                    message: 'La evaluación médica ha sido removida del historial clínico.',
-                    type: 'success',
-                    confirmText: 'Aceptar',
-                    cancelText: 'Cerrar',
-                    onConfirm: () => setModalConfirm(prev => ({ ...prev, isOpen: false }))
-                });
-            }
-        });
-    };
-
     // Contenido general (filtros + listado + paginación)
     const renderHistorialContent = () => (
         <div className="space-y-6">
@@ -243,7 +201,6 @@ export default function SiscopHc() {
                 pacienteId={pacienteId}
                 onVerRegistro={handleOpenVer}
                 onEditarRegistro={handleEditarRegistro}
-                onEliminarRegistro={handleEliminarRegistro}
             />
 
             {totalPages > 1 && (

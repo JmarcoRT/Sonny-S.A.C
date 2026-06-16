@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { TrendingUp, Scale } from 'lucide-react';
 import SiscopWrap from './SISCOP-WRAP';
-import { MOCK_PACIENTES, MOCK_EVALUACIONES } from '../../mocks/mockPacientes';
+import { useState, useEffect } from 'react';
+import { listarEvaluaciones } from '../../services/evaluacionService';
 
 interface BarChartPoint {
     label: string;
@@ -13,6 +13,14 @@ interface SVGBarChartProps {
     data: BarChartPoint[];
     color: string;
     title: string;
+}
+
+const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+function mesDesdeFecha(fecha: string): string {
+    const partes = fecha.split('-'); // [DD, MM, YYYY]
+    const mm = parseInt(partes[1], 10);
+    return MESES_CORTOS[mm - 1] || '';
 }
 
 function SVGBarChart({ data, color, title }: SVGBarChartProps) {
@@ -123,42 +131,43 @@ export default function SiscopGraf() {
     const [searchParams] = useSearchParams();
     const pacienteId = searchParams.get('id') || '';
 
-    // Cargar y ordenar puntos de peso para el paciente actual
-    const weightData = useMemo(() => {
-        if (pacienteId === '1') {
-            return [
-                { label: 'Jul', value: 86.2 },
-                { label: 'Ago', value: 84.7 },
-                { label: 'Sep', value: 82.9 },
-                { label: 'Oct', value: 80.5 },
-                { label: 'Nov', value: 78.8 },
-                { label: 'Dic', value: 76.9 },
-                { label: 'Ene', value: 74.8 },
-                { label: 'Feb', value: 72.9 },
-                { label: 'Mar', value: 70.8 },
-                { label: 'Abr', value: 69.0 },
-                { label: 'May', value: 67.2 }
-            ];
-        } else {
-            // Generar datos simulados de 11 meses para otros pacientes terminando en su peso actual
-            const pac = MOCK_PACIENTES.find(p => p.id === pacienteId);
-            const evs = MOCK_EVALUACIONES.filter(e => e.pacienteId === pacienteId);
-            const currentWeight = evs.length > 0 ? evs[0].peso : (pac?.sexo === 'Masculino' ? 82.0 : 64.0);
+    const [weightData, setWeightData] = useState<BarChartPoint[]>([]);
+    const [loading, setLoading] = useState(true);
 
-            const monthsList = ['Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May'];
-            return monthsList.map((m, i) => {
-                const diff = (10 - i) * 1.5;
-                return {
-                    label: m,
-                    value: parseFloat((currentWeight + diff).toFixed(1))
-                };
-            });
-        }
+    useEffect(() => {
+        let activo = true;
+        (async () => {
+            if (!pacienteId) { if (activo) { setWeightData([]); setLoading(false); } return; }
+            try {
+                setLoading(true);
+                const resp = await listarEvaluaciones(pacienteId);
+                // Ordenar de más antigua a más reciente (para leer izquierda → derecha)
+                const ordenadas = [...resp.data].sort(
+                    (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
+                );
+                const puntos: BarChartPoint[] = ordenadas.map((ev) => ({
+                    label: mesDesdeFecha(
+                        // ev.fecha viene ISO del backend; lo paso a DD-MM-YYYY simple para el helper
+                        (() => {
+                            const d = new Date(ev.fecha);
+                            const dd = String(d.getDate()).padStart(2, '0');
+                            const mm = String(d.getMonth() + 1).padStart(2, '0');
+                            return `${dd}-${mm}-${d.getFullYear()}`;
+                        })()
+                    ),
+                    value: ev.peso,
+                }));
+                if (activo) setWeightData(puntos);
+            } catch {
+                if (activo) setWeightData([]);
+            } finally {
+                if (activo) setLoading(false);
+            }
+        })();
+        return () => { activo = false; };
     }, [pacienteId]);
 
-    const hasData = useMemo(() => {
-        return MOCK_EVALUACIONES.some(e => e.pacienteId === pacienteId);
-    }, [pacienteId]);
+    const hasData = weightData.length > 0;
 
     return (
         <SiscopWrap>
@@ -168,7 +177,9 @@ export default function SiscopGraf() {
                     <p className="text-xs text-slate-400">Progreso histórico del peso del paciente</p>
                 </div>
 
-                {!hasData ? (
+                {loading ? (
+                    <div className="text-center py-12 text-slate-400 text-sm">Cargando evolución…</div>
+                ) : !hasData ? (
                     <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                         <Scale className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                         <p className="text-sm font-semibold text-slate-500">No se encontraron evaluaciones registradas.</p>
