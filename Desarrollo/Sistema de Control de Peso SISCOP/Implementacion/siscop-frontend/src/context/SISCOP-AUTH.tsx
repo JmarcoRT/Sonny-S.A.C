@@ -40,6 +40,7 @@ export function SiscopAuthProvider({ children }: { children: React.ReactNode }) 
 
     const logout = () => {
         logoutLocal();
+        sessionStorage.removeItem('siscopChatMessages');
         setUsuario(null);
     };
 

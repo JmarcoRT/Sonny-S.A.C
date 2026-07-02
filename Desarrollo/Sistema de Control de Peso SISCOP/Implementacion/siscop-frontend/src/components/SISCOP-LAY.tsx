@@ -1,6 +1,8 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './layout/Sidebar';
 import { Headbar } from './layout/Headbar';
+import { SiscopChatProvider } from '../context/SISCOP-CHAT';
+import SiscopChatWidget from './SISCOP-CHATWIDGET';
 
 export default function SiscopLay() {
     const location = useLocation();
@@ -15,6 +17,9 @@ export default function SiscopLay() {
                     <Outlet />
                 </main>
             </div>
+            <SiscopChatProvider>
+                <SiscopChatWidget />
+            </SiscopChatProvider>
         </div>
     );
 }

@@ -13,6 +13,7 @@ Backend Express + Sequelize del Sistema de Control de Pacientes Nutricionales de
 | `SISCOP-AUTH.js`   | Autenticación JWT + bcrypt.                  |
 | `SISCOP-VBACK.js`  | Validaciones de entrada (express-validator). |
 | `SISCOP-RPDF.js`   | Generación de reportes en PDF (PDFKit).      |
+| `SISCOP-CHAT.js`   | Proxy de chatbot hacia Google Gemini.        |
 | `server.js`        | Punto de entrada HTTP.                       |
 | `seed.js`          | Siembra de usuarios y pacientes de prueba.   |
 | `.env`             | Credenciales de BD y configuración.          |
@@ -73,3 +74,4 @@ Contraseña en todos: `siscop123`
 | GET    | `/api/dashboard`                           | JWT  | cualquiera    |
 | GET    | `/api/pacientes/:id/reporte/historial`     | JWT  | cualquiera    |
 | GET    | `/api/evaluaciones/:id/reporte`            | JWT  | cualquiera    |
+| POST   | `/api/chat`                                | JWT  | cualquiera    |
