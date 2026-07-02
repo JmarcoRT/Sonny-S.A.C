@@ -7,12 +7,14 @@ const express = require('express');
 
 const { loginUsuario, requireAuth, requireRol } = require('./SISCOP-AUTH');
 const { pacientesSrv, evaluacionesSrv, dashboardSrv } = require('./SISCOP-SRV');
+const { chatSrv } = require('./SISCOP-CHAT');
 const {
   validarLogin,
   validarPaciente,
   validarEvaluacion,
   validarIdParam,
   validarFiltrosPaciente,
+  validarChat,
 } = require('./SISCOP-VBACK');
 const reportes = require('./SISCOP-RPDF');
 
@@ -181,6 +183,22 @@ router.get(
   validarIdParam,
   wrap(async (req, res) => {
     await reportes.evaluacion(req.params.id, res);
+  })
+);
+
+// ═════════════════════════════════════════════
+//  CHATBOT
+// ═════════════════════════════════════════════
+router.post(
+  '/chat',
+  requireAuth,
+  validarChat,
+  wrap(async (req, res) => {
+    const { reply } = await chatSrv.responder({
+      messages: req.body.messages,
+      autor:    req.auth,
+    });
+    res.json({ ok: true, reply });
   })
 );
 

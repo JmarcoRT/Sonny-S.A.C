@@ -128,6 +128,35 @@ const validarFiltrosPaciente = [
   aplicarValidaciones,
 ];
 
+// ═══════════════════════════════════════════════
+//  CHATBOT
+// ═══════════════════════════════════════════════
+const validarChat = [
+  body('messages')
+    .isArray({ min: 1, max: 50 })
+    .withMessage('El campo messages debe ser un arreglo de 1 a 50 elementos.'),
+
+  body('messages.*.role')
+    .isIn(['user', 'assistant'])
+    .withMessage('El campo role debe ser "user" o "assistant".'),
+
+  body('messages.*.text')
+    .isString().withMessage('El campo text debe ser una cadena de texto.')
+    .trim()
+    .isLength({ min: 1, max: 4000 })
+    .withMessage('El campo text debe tener entre 1 y 4000 caracteres.'),
+
+  body('messages').custom((arr) => {
+    if (!Array.isArray(arr) || arr.length === 0) return true;
+    if (arr[arr.length - 1].role !== 'user') {
+      throw new Error('El último mensaje del historial debe tener role "user".');
+    }
+    return true;
+  }),
+
+  aplicarValidaciones,
+];
+
 // ─────────────────────────────────────────────
 //  Exportaciones
 // ─────────────────────────────────────────────
@@ -138,4 +167,5 @@ module.exports = {
   validarEvaluacion,
   validarIdParam,
   validarFiltrosPaciente,
+  validarChat,
 };
